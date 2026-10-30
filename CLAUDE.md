@@ -36,6 +36,13 @@ Reglas del proyecto para cualquier asistente de código o integrante del equipo.
 - Usuarios demo los crea Back con su seed (`admin@`, `docente1@`, `tutor1@`… de la "Escuela Demo Perico"); la contraseña la pasa Back por privado, nunca se escribe en el repo.
 - Tests e2e en `e2e/auth.spec.ts`: sin sesión `/` e `/inicio` terminan en `/ingresar`; `/ingresar` muestra el pie exacto y el error visible.
 
+## PWA instalable (B-11)
+- `src/app/manifest.ts` (convención de Next.js) sirve `/manifest.webmanifest`: `name`/`short_name` "RedEduca", `display: "standalone"`, `start_url: "/"`, `lang: "es"`.
+- `theme_color` = `--brand` y `background_color` = `--page` de `globals.css`; el test `src/app/manifest.test.ts` los compara con el CSS. Si cambia la paleta, actualizar el manifiesto.
+- Íconos PNG de 192 y 512 px en `public/icons/`, generados desde `src/app/icon.png`. Si cambia el ícono de marca, regenerarlos.
+- `src/proxy.ts` excluye `manifest.webmanifest` del matcher: el navegador lo pide sin sesión (en `/ingresar`) y una redirección rompería la instalación.
+- Pendiente: verificación manual en Android/Chrome ("Agregar a pantalla de inicio" y apertura sin barra del navegador); la hace una persona del grupo.
+
 ## Entorno local
 - API de Back en `http://localhost:3000`; el Front se levanta con `npm run dev -- -p 3001`. CI corre el Front solo en el puerto 3000.
 
