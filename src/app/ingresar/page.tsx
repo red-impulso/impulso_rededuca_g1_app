@@ -4,18 +4,11 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { BrandPanel } from "@/components/auth/brand-panel";
-import { ProfilePicker } from "@/components/auth/profile-picker";
-import { useSession } from "@/features/session/session";
-import type { Membership } from "@/features/session/session";
 import { createClient } from "@/lib/supabase/client";
 import { getAuthErrorMessage } from "@/lib/supabase/auth-error";
 
-type Step = "login" | "profiles";
-
 export default function LoginPage() {
   const router = useRouter();
-  const { setActive } = useSession();
-  const [step, setStep] = useState<Step>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -44,32 +37,13 @@ export default function LoginPage() {
         return;
     }
     setPassword("");
-    setStep("profiles");
+    router.push("/inicio");
     } catch (err) {
         setError(getAuthErrorMessage(err));
     } finally {
         setLoading(false);
     }
 }
-// Guarda el perfil elegido y va al Inicio
-function handleSelect(membership: Membership) {
-    setActive(membership);
-    router.push("/");
-}
-
-  // Cierra la sesión de Supabase y vuelve al formulario
-async function handleLogout() {
-    try {
-        await createClient().auth.signOut();
-    } catch {
-      // Si falla el cierre remoto, igual limpiamos el estado local
-    }
-    setActive(null);
-    setPassword("");
-    setShowPassword(false);
-    setStep("login");
-}
-
 return (
     <main className="grid flex-1 lg:min-h-0 lg:basis-0 lg:grid-cols-2 lg:grid-rows-1">
       {/* Panel de marca: solo en escritorio, a la izquierda */}
@@ -90,8 +64,7 @@ return (
             <p className="text-lg font-semibold text-ink">RedEduca</p>
         </div>
 
-        {step === "login" ? (
-            <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
                 <div>
                 <h2 className="text-2xl font-semibold text-ink">Ingresar</h2>
                 <p className="mt-1 text-muted">
@@ -149,9 +122,6 @@ return (
                 {loading ? "Ingresando..." : "Ingresar"}
             </button>
             </form>
-        ) : (
-            <ProfilePicker onSelect={handleSelect} onLogout={handleLogout} />
-        )}
         </div>
     </section>
     </main>

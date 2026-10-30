@@ -2,36 +2,41 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { getNavItemsForRole } from "@/config/navigation";
-import type { Role } from "@/features/session/session";
+import { usePathname, useRouter } from "next/navigation";
+import { getNavItems } from "@/config/navigation";
+import { useSession } from "@/features/session/use-session";
+import { setActiveInstitutionId } from "@/lib/api";
+import { signOut } from "@/lib/supabase/sign-out";
 
-type AppHeaderProps = {
-    role: Role;
-    userName: string;
-    institutionName: string;
-};
-
-export function AppHeader({ role, userName, institutionName }: AppHeaderProps) {
+export function AppHeader() {
 const pathname = usePathname();
+const router = useRouter();
+const { profile, active } = useSession();
 const [open, setOpen] = useState(false);
 
-  // Solo los ítems que puede ver el rol del perfil elegido
-const items = getNavItemsForRole(role);
+  // Solo los ítems que puede ver el rol de la membresía activa
+const items = getNavItems(active.role);
+
+  // Cierra la sesión de Supabase y vuelve a /ingresar
+async function handleLogout() {
+    await signOut();
+    setActiveInstitutionId(null);
+    router.push("/ingresar");
+}
 
 return (
     <header className="border-b border-line bg-surface">
     <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
-        <div className="flex items-center gap-3">
+        <div className="flex min-w-0 items-center gap-3">
         <div
             className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand font-bold text-white"
             aria-hidden="true"
         >
             R
         </div>
-        <div className="leading-tight">
+        <div className="min-w-0 leading-tight">
             <p className="font-semibold text-ink">RedEduca</p>
-            <p className="text-xs text-muted">{institutionName}</p>
+            <p className="truncate text-xs text-muted">{active.institutionName}</p>
         </div>
         </div>
 
@@ -59,8 +64,8 @@ return (
         </ul>
         </nav>
 
-        <div className="flex items-center gap-3">
-        <span className="hidden text-sm text-muted sm:inline">{userName}</span>
+        <div className="flex shrink-0 items-center gap-2">
+        <span className="hidden text-sm text-muted sm:inline">{profile.fullName}</span>
           {/* Botón del menú en celular */}
         <button
             type="button"
@@ -70,6 +75,13 @@ return (
             className="rounded-lg border border-line px-3 py-2 text-sm font-medium text-ink lg:hidden"
         >
             {open ? "Cerrar" : "Menú"}
+        </button>
+        <button
+            type="button"
+            onClick={handleLogout}
+            className="rounded-lg px-2 py-2 text-sm font-medium text-brand hover:underline"
+        >
+            Salir
         </button>
         </div>
     </div>
