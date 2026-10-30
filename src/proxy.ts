@@ -57,8 +57,9 @@ return response;
 }
 
 export const config = {
-  // Todo salvo archivos internos de Next, imágenes e íconos
+  // Todo salvo archivos internos de Next, imágenes, íconos y el manifiesto (el navegador
+    // lo pide sin sesión, en /ingresar, para poder instalar la app)
     matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|icon.svg|icon.png|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|icon.svg|icon.png|manifest.webmanifest|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
 ],
 };
