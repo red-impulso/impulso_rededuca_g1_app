@@ -1,6 +1,10 @@
 import { expect, test } from "@playwright/test";
+import type { Page } from "@playwright/test";
 
 const FOOTER_TEXT = "Creado por alumnos de IES Nº 6 de Perico, Jujuy, Argentina";
+
+// Next agrega un <div role="alert"> propio (anunciador de rutas); buscamos solo el del formulario
+const formAlert = (page: Page) => page.locator("form").getByRole("alert");
 
 test.describe("rutas protegidas", () => {
 test("visitar /inicio sin sesión termina en /ingresar", async ({ page }) => {
@@ -31,7 +35,7 @@ test("muestra el formulario de correo y contraseña", async ({ page }) => {
 test("avisa si faltan datos", async ({ page }) => {
     await page.goto("/ingresar");
     await page.getByRole("button", { name: "Ingresar" }).click();
-    await expect(page.getByRole("alert")).toHaveText(
+    await expect(formAlert(page)).toHaveText(
     "Completá tu correo y tu contraseña.",
     );
 });
@@ -42,7 +46,7 @@ test("muestra un error visible si el ingreso falla", async ({ page }) => {
     await page.getByLabel("Contraseña").fill("contraseña-incorrecta");
     await page.getByRole("button", { name: "Ingresar" }).click();
     // Sin variables de entorno avisa que faltan; con Supabase real, "Correo o contraseña incorrectos."
-    await expect(page.getByRole("alert")).toBeVisible();
+    await expect(formAlert(page)).toBeVisible();
     await expect(page).toHaveURL(/\/ingresar$/);
 });
 });
