@@ -32,7 +32,7 @@ Reglas del proyecto para cualquier asistente de código o integrante del equipo.
 - Cliente de Supabase para el navegador en `src/lib/supabase/client.ts` (`createClient()`); mensajes de error en español en `src/lib/supabase/auth-error.ts`; cierre de sesión en `src/lib/supabase/sign-out.ts`.
 - `/ingresar` usa `signInWithPassword`; todo error se muestra en pantalla (`role="alert"`). En desarrollo se agrega el detalle técnico.
 - `src/proxy.ts` (Next 16 usa `proxy.ts`, no `middleware.ts`) renueva la sesión y redirige a `/ingresar` toda ruta sin sesión. Rutas públicas: solo `/ingresar` (`PUBLIC_PATHS`). Sin variables de Supabase también redirige.
-- El botón "Salir" cierra la sesión de Supabase y borra el perfil activo.
+- El botón "Salir" (en el header del panel) cierra la sesión de Supabase y vuelve a `/ingresar`.
 - Usuarios demo los crea Back con su seed (`admin@`, `docente1@`, `tutor1@`… de la "Escuela Demo Perico"); la contraseña la pasa Back por privado, nunca se escribe en el repo.
 - Tests e2e en `e2e/auth.spec.ts`: sin sesión `/` e `/inicio` terminan en `/ingresar`; `/ingresar` muestra el pie exacto y el error visible.
 
@@ -43,7 +43,10 @@ Reglas del proyecto para cualquier asistente de código o integrante del equipo.
 - `type Role = 'admin' | 'director' | 'teacher' | 'guardian'`.
 - Requests autenticados: `Authorization: Bearer <access_token>` y `X-Institution-Id: <uuid>`.
 - `GET /me` devuelve `{ profile: { id, fullName, phone }, memberships: [{ id, institutionId, institutionName, role }] }`; `GET /me/subjects` y `/me/courses` (docente), `GET /me/students` (tutor).
-- `apiFetch<T>(path, init?)` en `src/lib/api.ts` (pendiente), `useSession()` en `src/features/session/`, `navItems` en `src/config/navigation.ts`, `studentTabs` en `src/config/student-tabs.ts` (pendiente).
+- `apiFetch<T>(path, init?)` en `src/lib/api.ts`: agrega `Authorization` (token de la sesión de Supabase) y `X-Institution-Id` (membresía activa, la fija `SessionProvider` con `setActiveInstitutionId`), usa `NEXT_PUBLIC_API_URL` y lanza `ApiError { status, message }` si la respuesta no es 2xx (`status: 0` si no hay conexión).
+- Sesión: `SessionProvider` (`src/features/session/session-provider.tsx`) llama a `GET /me` y vive en `src/app/(panel)/layout.tsx`, no en el layout raíz (`/ingresar` no la usa). `useSession()` (`use-session.ts`) devuelve `{ profile, memberships, active }`; tipos y `ROLE_LABELS` en `types.ts`. La membresía activa es la primera (el selector llega en M10-2). Un 401 de la API redirige a `/ingresar`.
+- Menú: `getNavItems(role)` y `navItems` en `src/config/navigation.ts`; `studentTabs` en `src/config/student-tabs.ts` (vacío, lo completan los módulos de estudiante).
+- Pantallas con sesión van dentro de `src/app/(panel)/` (header + menú por rol). `/` redirige a `/inicio`.
 
 ## Flujo de trabajo
 - Una tarea = un PR. Se mergea solo con CI en verde y aprobación de otro integrante.
