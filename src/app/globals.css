@@ -1,26 +1,54 @@
 @import "tailwindcss";
 
+/* Colores de la marca RedEduca (variables globales).
+   Paleta B-03: tinta #14213d, naranja #f46a3c, azul #2563eb, verde #0f8a81 */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --ink: #14213d; /* tinta: texto principal */
+  --accent: #f46a3c; /* naranja: acentos y llamados a la acción */
+  --blue: #2563eb; /* azul: enlaces e información */
+  --brand: #0f8a81; /* verde: color principal de la marca */
+  --brand-dark: #14213d; /* azul oscuro */
+  --page: #f6f8fb; /* fondo claro */
+  --surface: #ffffff; /* fondo de tarjetas y formularios */
+  --line: #d5dce6; /* bordes */
+  --muted: #5b6678; /* texto secundario */
+  --error: #b91c1c;
+  --error-bg: #fef2f2;
+  --success: #047857;
+  --success-bg: #ecfdf5;
 }
 
+/* Expone las variables como clases de Tailwind: bg-brand, text-ink, bg-accent, font-sans, etc. */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-ink: var(--ink);
+  --color-accent: var(--accent);
+  --color-blue: var(--blue);
+  --color-brand: var(--brand);
+  --color-brand-dark: var(--brand-dark);
+  --color-page: var(--page);
+  --color-surface: var(--surface);
+  --color-line: var(--line);
+  --color-muted: var(--muted);
+  --color-error: var(--error);
+  --color-error-bg: var(--error-bg);
+  --color-success: var(--success);
+  --color-success-bg: var(--success-bg);
+  --font-sans: var(--font-poppins), system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--page);
+  color: var(--ink);
+  /* Poppins (cargada con next/font) y, si todavía no cargó, la letra del sistema */
+  font-family:
+    var(--font-poppins), system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Evita scroll horizontal en celular */
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
 }

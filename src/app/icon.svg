@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+<!-- Ícono de RedEduca: tres figuras (familias, docentes e institución) -->
+<defs>
+    <linearGradient id="c" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#47b0d8"/>
+    <stop offset="1" stop-color="#57b8ae"/>
+    </linearGradient>
+</defs>
+<g transform="translate(64 64) scale(1.12) translate(-64 -66)">
+    <!-- Figura central -->
+    <circle cx="64" cy="33" r="12.5" fill="url(#c)"/>
+    <ellipse cx="64" cy="82" rx="29" ry="31" fill="url(#c)"/>
+    <!-- Figura izquierda -->
+    <circle cx="31" cy="43" r="9" fill="#287df2"/>
+    <ellipse cx="33" cy="77" rx="20" ry="21" fill="#2373ec" opacity="0.92"/>
+    <!-- Figura derecha -->
+    <circle cx="97" cy="43" r="8.5" fill="#57b19e"/>
+    <ellipse cx="95" cy="77" rx="18.5" ry="20" fill="#60b1a3" opacity="0.92"/>
+    <!-- Trazo blanco del centro -->
+    <path d="M81 64 V85 Q81 92 73 92 H68" fill="none" stroke="#ffffff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+</svg>
