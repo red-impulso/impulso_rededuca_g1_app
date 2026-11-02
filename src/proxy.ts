@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 // Rutas que se pueden ver sin sesión
-const PUBLIC_PATHS = ["/ingresar"];
+const PUBLIC_PATHS = ["/ingresar", "/recuperar-contrasena"];
 
 function isPublicPath(pathname: string) {
 return PUBLIC_PATHS.some(
@@ -22,22 +22,22 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   // Sin configuración de Supabase nadie puede tener sesión: solo rutas públicas
 if (!supabaseUrl || !supabaseAnonKey) {
     return isPublicPath(request.nextUrl.pathname)
-    ? response
-    : NextResponse.redirect(new URL("/ingresar", request.url));
+        ? response
+        : NextResponse.redirect(new URL("/ingresar", request.url));
 }
 
 const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {
-    getAll() {
+        getAll() {
         return request.cookies.getAll();
     },
     setAll(cookiesToSet) {
         cookiesToSet.forEach(({ name, value }) =>
-        request.cookies.set(name, value),
+            request.cookies.set(name, value),
         );
         response = NextResponse.next({ request });
         cookiesToSet.forEach(({ name, value, options }) =>
-        response.cookies.set(name, value, options),
+            response.cookies.set(name, value, options),
         );
     },
     },
@@ -57,8 +57,13 @@ return response;
 }
 
 export const config = {
+<<<<<<< Updated upstream
   // Todo salvo archivos internos de Next, imágenes, íconos y el manifiesto (el navegador
     // lo pide sin sesión, en /ingresar, para poder instalar la app)
+=======
+  // Todo salvo archivos internos de Next, imágenes, íconos y el manifiesto
+  // (el navegador lo pide sin sesión; si lo redirigimos, no se puede instalar la app)
+>>>>>>> Stashed changes
     matcher: [
     "/((?!_next/static|_next/image|favicon.ico|icon.svg|icon.png|manifest.webmanifest|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
 ],

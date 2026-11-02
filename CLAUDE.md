@@ -34,7 +34,23 @@ Reglas del proyecto para cualquier asistente de código o integrante del equipo.
 - `src/proxy.ts` (Next 16 usa `proxy.ts`, no `middleware.ts`) renueva la sesión y redirige a `/ingresar` toda ruta sin sesión. Rutas públicas: solo `/ingresar` (`PUBLIC_PATHS`). Sin variables de Supabase también redirige.
 - El botón "Salir" (en el header del panel) cierra la sesión de Supabase y vuelve a `/ingresar`.
 - Usuarios demo los crea Back con su seed (`admin@`, `docente1@`, `tutor1@`… de la "Escuela Demo Perico"); la contraseña la pasa Back por privado, nunca se escribe en el repo.
-- Tests e2e en `e2e/auth.spec.ts`: sin sesión `/` e `/inicio` terminan en `/ingresar`; `/ingresar` muestra el pie exacto y el error visible.
+- Tests e2e en `e2e/auth.spec.ts`: sin sesión `/` e `/inicio` terminan en `/ingresar`; `/ingresar` muestra el pie exacto y el error visible. Next agrega su propio `<div role="alert">`: en tests usar `page.locator("form").getByRole("alert")`.
+
+## Sesión, API y menú (B-10)
+- `apiFetch<T>(path: string, init?: RequestInit): Promise<T>` en `src/lib/api.ts`: toma el `access_token` de la sesión de Supabase, agrega `Authorization: Bearer <token>` y `X-Institution-Id: <uuid de la membresía activa>`, usa `NEXT_PUBLIC_API_URL` y lanza `ApiError { status: number; message: string }` si la respuesta no es 2xx. Todas las llamadas a la API pasan por `apiFetch`; no usar `fetch` directo.
+- La sesión sale de `GET /me`, no de datos de ejemplo. Archivos: `src/features/session/session-provider.tsx` y `use-session.ts`. `useSession()` devuelve `{ profile, memberships, active }`.
+- Membresía activa: si hay una sola, esa; si hay varias, la primera (el selector llega en M10-2).
+- Menú por rol: `getNavItems(role: Role): NavItem[]` en `src/config/navigation.ts`. Cada módulo agrega sus ítems en una línea. Si dos PR chocan en `navigation.ts` o `student-tabs.ts`, se conservan las dos líneas.
+- `studentTabs: { label: string; segment: string }[]` en `src/config/student-tabs.ts` (pestañas de `/hijos/[studentId]/<segment>`). M1 y M2 agregan una línea cada uno.
+- Rutas con sesión dentro del grupo `src/app/(panel)/`: `layout.tsx` con header y menú, e Inicio en `/inicio` ("Hola, {nombre}" + rol + institución). `/` redirige a `/inicio`.
+- Test de menú en `src/config/navigation.test.ts`: `getNavItems('guardian')` no incluye ítems solo de docentes.
+
+## PWA (B-11)
+- `src/app/manifest.ts` (convención de Next.js, `MetadataRoute.Manifest`): `name` y `short_name` "RedEduca", `display: "standalone"`, `start_url: "/"`, `lang: "es"`.
+- Íconos: los de la marca (B-03), con tamaños de 192 px y 512 px en PNG. Nunca el de Vercel.
+- `theme_color` y `background_color` salen de los tokens de `globals.css` (`--brand` y el fondo), sin colores nuevos.
+- Test Vitest: el manifiesto tiene `name: "RedEduca"`, `display: "standalone"` y los íconos de 192 px y 512 px.
+- Verificación manual: en Android/Chrome aparece "Agregar a pantalla de inicio" y abre sin barra del navegador. Solo funciona con HTTPS o `localhost`.
 
 ## PWA instalable (B-11)
 - `src/app/manifest.ts` (convención de Next.js) sirve `/manifest.webmanifest`: `name`/`short_name` "RedEduca", `display: "standalone"`, `start_url: "/"`, `lang: "es"`.
@@ -49,12 +65,17 @@ Reglas del proyecto para cualquier asistente de código o integrante del equipo.
 ## Contratos con la API
 - `type Role = 'admin' | 'director' | 'teacher' | 'guardian'`.
 - Requests autenticados: `Authorization: Bearer <access_token>` y `X-Institution-Id: <uuid>`.
+<<<<<<< Updated upstream
 - `GET /me` devuelve `{ profile: { id, fullName, phone }, memberships: [{ id, institutionId, institutionName, role }] }`; `GET /me/subjects` y `/me/courses` (docente), `GET /me/students` (tutor).
 - `apiFetch<T>(path, init?)` en `src/lib/api.ts`: agrega `Authorization` (token de la sesión de Supabase) y `X-Institution-Id` (membresía activa, la fija `SessionProvider` con `setActiveInstitutionId`), usa `NEXT_PUBLIC_API_URL` y lanza `ApiError { status, message }` si la respuesta no es 2xx (`status: 0` si no hay conexión).
 - Sesión: `SessionProvider` (`src/features/session/session-provider.tsx`) llama a `GET /me` y vive en `src/app/(panel)/layout.tsx`, no en el layout raíz (`/ingresar` no la usa). `useSession()` (`use-session.ts`) devuelve `{ profile, memberships, active }`; tipos y `ROLE_LABELS` en `types.ts`. La membresía activa es la primera (el selector llega en M10-2). Un 401 de la API redirige a `/ingresar`.
 - Menú: `getNavItems(role)` y `navItems` en `src/config/navigation.ts`; `studentTabs` en `src/config/student-tabs.ts` (vacío, lo completan los módulos de estudiante).
 - Pantallas con sesión van dentro de `src/app/(panel)/` (header + menú por rol). `/` redirige a `/inicio`.
+=======
+- `GET /me` devuelve `{ profile: { id, fullName, phone }, memberships: [{ id, institutionId, institutionName, role }] }`; `GET /me/subjects` y `/me/courses` (docente), `GET /me/students` (tutor). Verificar en el repo de la API antes de usarlos.
+>>>>>>> Stashed changes
 
 ## Flujo de trabajo
 - Una tarea = un PR. Se mergea solo con CI en verde y aprobación de otro integrante.
 - No crear ramas ni subir cambios sin acuerdo del grupo.
+- Antes de abrir el PR: `npm run lint`, `npm test` y `npm run build` en verde.
