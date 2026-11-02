@@ -1,18 +1,17 @@
 import Image from "next/image";
+import { LogoMark, Wordmark } from "@/components/brand/logo";
 
 // Panel de marca (solo en escritorio, a la izquierda del formulario)
 export function BrandPanel() {
 return (
     <section className="flex w-full flex-col gap-5 bg-linear-to-br from-brand-dark to-brand px-6 py-8 text-white lg:justify-center lg:overflow-y-auto lg:px-14">
     <div className="flex items-center gap-3">
-        <div
-            className="flex h-11 w-11 items-center justify-center rounded-xl bg-white text-xl font-bold text-brand"
-            aria-hidden="true"
-        >
-            R
+        {/* Logo sobre el mismo recuadro blanco que tenía la "R", para que se vea sobre el fondo oscuro */}
+        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white">
+        <LogoMark size={34} />
         </div>
         <div>
-        <p className="text-lg font-semibold leading-tight">RedEduca</p>
+        <Wordmark tone="dark" className="block text-lg leading-tight" />
         <p className="text-xs text-white/80">Comunidad educativa conectada</p>
         </div>
     </div>

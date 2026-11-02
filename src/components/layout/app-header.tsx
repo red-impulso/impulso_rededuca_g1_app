@@ -2,41 +2,70 @@
 
 import { useState } from "react";
 import Link from "next/link";
+<<<<<<< Updated upstream
 import { usePathname, useRouter } from "next/navigation";
 import { getNavItems } from "@/config/navigation";
 import { useSession } from "@/features/session/use-session";
 import { setActiveInstitutionId } from "@/lib/api";
+=======
+import { usePathname } from "next/navigation";
+import { LogoMark, Wordmark } from "@/components/brand/logo";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { getNavItemsForRole } from "@/config/navigation";
+import { useSession } from "@/features/session/session";
+import type { Role } from "@/features/session/session";
+>>>>>>> Stashed changes
 import { signOut } from "@/lib/supabase/sign-out";
 
-export function AppHeader() {
+type AppHeaderProps = {
+    role: Role;
+    userName: string;
+    institutionName: string;
+};
+
+export function AppHeader({ role, userName, institutionName }: AppHeaderProps) {
 const pathname = usePathname();
+<<<<<<< Updated upstream
 const router = useRouter();
 const { profile, active } = useSession();
+=======
+const { setActive } = useSession();
+>>>>>>> Stashed changes
 const [open, setOpen] = useState(false);
 
-  // Solo los ítems que puede ver el rol de la membresía activa
-const items = getNavItems(active.role);
+  // Solo los ítems que puede ver el rol del perfil elegido
+const items = getNavItemsForRole(role);
 
+<<<<<<< Updated upstream
   // Cierra la sesión de Supabase y vuelve a /ingresar
 async function handleLogout() {
     await signOut();
     setActiveInstitutionId(null);
     router.push("/ingresar");
+=======
+  // Cierra la sesión de Supabase y vuelve al formulario de ingreso
+async function handleLogout() {
+    setLoggingOut(true);
+    try {
+    await signOut();
+    } catch {
+      // Si falla el cierre remoto, igual limpiamos el estado local
+    }
+    setActive(null);
+    // Recarga completa: borra cualquier estado que haya quedado en memoria
+    // (por ejemplo la lista de perfiles) y muestra siempre el formulario de ingreso
+    window.location.assign("/ingresar");
+>>>>>>> Stashed changes
 }
 
 return (
     <header className="border-b border-line bg-surface">
     <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
-        <div className="flex min-w-0 items-center gap-3">
-        <div
-            className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand font-bold text-white"
-            aria-hidden="true"
-        >
-            R
-        </div>
-        <div className="min-w-0 leading-tight">
-            <p className="font-semibold text-ink">RedEduca</p>
-            <p className="truncate text-xs text-muted">{active.institutionName}</p>
+        <div className="flex items-center gap-3">
+        <LogoMark size={36} />
+        <div className="leading-tight">
+            <Wordmark tone="light" className="block" />
+            <p className="text-xs text-muted">{institutionName}</p>
         </div>
         </div>
 
@@ -61,59 +90,86 @@ return (
                 </li>
             );
             })}
-        </ul>
+          </ul>
         </nav>
 
-        <div className="flex shrink-0 items-center gap-2">
-        <span className="hidden text-sm text-muted sm:inline">{profile.fullName}</span>
+        <div className="flex items-center gap-3">
+          <span className="hidden text-sm text-muted sm:inline">{userName}</span>
           {/* Botón del menú en celular */}
-        <button
+          <button
             type="button"
             onClick={() => setOpen((value) => !value)}
             aria-expanded={open}
             aria-controls="mobile-menu"
             className="rounded-lg border border-line px-3 py-2 text-sm font-medium text-ink lg:hidden"
-        >
+          >
             {open ? "Cerrar" : "Menú"}
+<<<<<<< Updated upstream
         </button>
         <button
             type="button"
             onClick={handleLogout}
+=======
+          </button>
+          {/* Abre la confirmación antes de cerrar la sesión */}
+          <button
+            type="button"
+            onClick={() => setConfirmOpen(true)}
+>>>>>>> Stashed changes
             className="rounded-lg px-2 py-2 text-sm font-medium text-brand hover:underline"
-        >
+          >
             Salir
-        </button>
+          </button>
         </div>
-    </div>
+      </div>
 
       {/* Menú desplegable en celular */}
-    {open && (
+      {open && (
         <nav
-            id="mobile-menu"
-            aria-label="Principal (celular)"
-            className="border-t border-line px-4 py-2 lg:hidden"
+          id="mobile-menu"
+          aria-label="Principal (celular)"
+          className="border-t border-line px-4 py-2 lg:hidden"
         >
-        <ul className="flex flex-col">
+          <ul className="flex flex-col">
             {items.map((item) => {
-            const isActive = pathname === item.href;
-            return (
+              const isActive = pathname === item.href;
+              return (
                 <li key={item.href}>
-                <Link
+                  <Link
                     href={item.href}
                     onClick={() => setOpen(false)}
                     aria-current={isActive ? "page" : undefined}
                     className={`block rounded-lg px-3 py-3 font-medium ${
+<<<<<<< Updated upstream
                     isActive ? "bg-brand text-white" : "text-ink"
+=======
+                      isActive ? "bg-brand text-white" : "text-ink"
+>>>>>>> Stashed changes
                     }`}
-                >
+                  >
                     {item.label}
-                </Link>
+                  </Link>
                 </li>
-            );
+              );
             })}
-        </ul>
+          </ul>
         </nav>
+<<<<<<< Updated upstream
     )}
+=======
+      )}
+
+      <ConfirmDialog
+        open={confirmOpen}
+        title="¿Cerrar sesión?"
+        description="Tendrás que ingresar de nuevo."
+        confirmLabel="Cerrar sesión"
+        destructive
+        loading={loggingOut}
+        onConfirm={handleLogout}
+        onCancel={() => setConfirmOpen(false)}
+      />
+>>>>>>> Stashed changes
     </header>
-);
+  );
 }

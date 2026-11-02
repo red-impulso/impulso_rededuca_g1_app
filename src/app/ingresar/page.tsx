@@ -4,9 +4,14 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { BrandPanel } from "@/components/auth/brand-panel";
+import { Logo } from "@/components/brand/logo";
+import { ProfilePicker } from "@/components/auth/profile-picker";
+import { useSession } from "@/features/session/session";
+import type { Membership } from "@/features/session/session";
 import { createClient } from "@/lib/supabase/client";
 import { getAuthErrorMessage } from "@/lib/supabase/auth-error";
 
+<<<<<<< Updated upstream
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -17,6 +22,61 @@ export default function LoginPage() {
 
   // Ingreso real con Supabase: si falla, muestra el error en pantalla
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+=======
+type Step = "login" | "profiles";
+
+// "Recordarme" guarda solo el correo en este navegador (nunca la contraseña)
+const REMEMBERED_EMAIL_KEY = "rededuca:remembered-email";
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function subscribeToStorage(onChange: () => void) {
+window.addEventListener("storage", onChange);
+return () => window.removeEventListener("storage", onChange);
+}
+
+function readRememberedEmail() {
+try {
+    return window.localStorage.getItem(REMEMBERED_EMAIL_KEY) ?? "";
+} catch {
+    return "";
+}
+}
+
+// En el servidor no hay navegador: no hay correo recordado
+function readRememberedEmailOnServer() {
+return "";
+}
+
+function saveRememberedEmail(email: string | null) {
+try {
+    if (email) window.localStorage.setItem(REMEMBERED_EMAIL_KEY, email);
+    else window.localStorage.removeItem(REMEMBERED_EMAIL_KEY);
+} catch {
+    // Sin almacenamiento disponible (modo privado, por ejemplo): se ingresa igual
+}
+}
+
+export default function LoginPage() {
+const router = useRouter();
+const { setActive } = useSession();
+const rememberedEmail = useSyncExternalStore(
+    subscribeToStorage,
+    readRememberedEmail,
+    readRememberedEmailOnServer,
+);
+const [step, setStep] = useState<Step>("login");
+  // null = la persona todavía no tocó el campo: se usa el correo recordado
+const [typedEmail, setTypedEmail] = useState<string | null>(null);
+const [rememberChoice, setRememberChoice] = useState<boolean | null>(null);
+const [password, setPassword] = useState("");
+const [showPassword, setShowPassword] = useState(false);
+const [loading, setLoading] = useState(false);
+const [error, setError] = useState<string | null>(null);
+const email = typedEmail ?? rememberedEmail;
+const remember = rememberChoice ?? rememberedEmail !== "";
+// Ingreso real con Supabase: si falla, muestra el error en pantalla
+async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+>>>>>>> Stashed changes
     event.preventDefault();
     setError(null);
 
@@ -35,15 +95,45 @@ export default function LoginPage() {
     if (signInError) {
         setError(getAuthErrorMessage(signInError));
         return;
+<<<<<<< Updated upstream
     }
     setPassword("");
     router.push("/inicio");
+=======
+        }
+        saveRememberedEmail(remember ? trimmedEmail : null);
+        setPassword("");
+        setStep("profiles");
+>>>>>>> Stashed changes
     } catch (err) {
         setError(getAuthErrorMessage(err));
     } finally {
         setLoading(false);
     }
 }
+<<<<<<< Updated upstream
+=======
+
+  // Guarda el perfil elegido y va al Inicio
+function handleSelect(membership: Membership) {
+    setActive(membership);
+    router.push("/");
+}
+
+  // Cierra la sesión de Supabase y vuelve al formulario
+async function handleLogout() {
+    try {
+    await createClient().auth.signOut();
+    } catch {
+      // Si falla el cierre remoto, igual limpiamos el estado local
+    }
+    setActive(null);
+    setPassword("");
+    setShowPassword(false);
+    setStep("login");
+}
+
+>>>>>>> Stashed changes
 return (
     <main className="grid flex-1 lg:min-h-0 lg:basis-0 lg:grid-cols-2 lg:grid-rows-1">
       {/* Panel de marca: solo en escritorio, a la izquierda */}
@@ -54,19 +144,22 @@ return (
     <section className="flex items-center justify-center px-6 py-10">
         <div className="w-full max-w-md">
           {/* Marca compacta: solo en celular */}
-        <div className="mb-8 flex items-center gap-3 lg:hidden">
-            <div
-                className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand text-lg font-bold text-white"
-                aria-hidden="true"
-            >
-                R
-            </div>
-            <p className="text-lg font-semibold text-ink">RedEduca</p>
+        <div className="mb-8 lg:hidden">
+            <Logo size={40} tone="light" />
         </div>
 
+<<<<<<< Updated upstream
         <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
                 <div>
                 <h2 className="text-2xl font-semibold text-ink">Ingresar</h2>
+=======
+        {step === "login" ? (
+            <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
+            <div>
+                <h2 className="text-2xl font-semibold text-ink">
+                    Te damos la bienvenida
+                </h2>
+>>>>>>> Stashed changes
                 <p className="mt-1 text-muted">
                     Entrá con tu correo y tu contraseña.
                 </p>
@@ -122,6 +215,9 @@ return (
                 {loading ? "Ingresando..." : "Ingresar"}
             </button>
             </form>
+        ) : (
+            <ProfilePicker onSelect={handleSelect} onLogout={handleLogout} />
+        )}
         </div>
     </section>
     </main>
