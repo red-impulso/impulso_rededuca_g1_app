@@ -11,10 +11,10 @@ import { getAuthErrorMessage } from "@/lib/supabase/auth-error";
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function RecoverPasswordPage() {
-const [email, setEmail] = useState("");
-const [loading, setLoading] = useState(false);
-const [sent, setSent] = useState(false);
-const [error, setError] = useState<string | null>(null);
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Pide a Supabase el enlace para cambiar la contraseña
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
