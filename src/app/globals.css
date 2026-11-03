@@ -16,6 +16,8 @@
   --error-bg: #fef2f2;
   --success: #047857;
   --success-bg: #ecfdf5;
+  --warning: #92400e; /* texto de atención (notas de 6 a 6,9 y avisos) */
+  --warning-bg: #fef3c7; /* fondo de atención */
 }
 
 /* Expone las variables como clases de Tailwind: bg-brand, text-ink, bg-accent, font-sans, etc. */
@@ -33,6 +35,8 @@
   --color-error-bg: var(--error-bg);
   --color-success: var(--success);
   --color-success-bg: var(--success-bg);
+  --color-warning: var(--warning);
+  --color-warning-bg: var(--warning-bg);
   --font-sans: var(--font-poppins), system-ui, -apple-system, "Segoe UI", Roboto,
     "Helvetica Neue", Arial, sans-serif;
 }
