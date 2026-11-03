@@ -20,13 +20,14 @@ export function AppHeader() {
   // Solo los ítems que puede ver el rol de la membresía activa
   const items = getNavItems(active.role);
 
-  // Cierra la sesión de Supabase y vuelve al formulario de ingreso
+  // Cierra la sesión de S[upabase y vuelve al formulario de ingreso
   async function handleLogout() {
     setLoggingOut(true);
     await signOut();
     setActiveInstitutionId(null);
     // Recarga completa: borra cualquier estado que haya quedado en memoria
     // y muestra siempre el formulario de ingreso
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- recarga completa a propósito: Cache Components conserva el estado de pantallas ya visitadas
     window.location.assign("/ingresar");
   }
 
