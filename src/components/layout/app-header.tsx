@@ -27,6 +27,7 @@ export function AppHeader() {
     setActiveInstitutionId(null);
     // Recarga completa: borra cualquier estado que haya quedado en memoria
     // y muestra siempre el formulario de ingreso
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- recarga completa a propósito: Cache Components conserva el estado de pantallas ya visitadas
     window.location.assign("/ingresar");
   }
 
