@@ -20,7 +20,7 @@ export function AppHeader() {
   // Solo los ítems que puede ver el rol de la membresía activa
   const items = getNavItems(active.role);
 
-  // Cierra la sesión de Supabase y vuelve al formulario de ingreso
+  // Cierra la sesión de S[upabase y vuelve al formulario de ingreso
   async function handleLogout() {
     setLoggingOut(true);
     await signOut();
