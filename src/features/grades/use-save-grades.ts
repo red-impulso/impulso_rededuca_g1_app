@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import type { SaveState } from "@/components/ui/save-bar";
 import { ApiError, apiFetch } from "@/lib/api";
 import type { SaveGradesBody, SaveGradesResponse } from "./types";
 
@@ -9,14 +10,6 @@ export const SAVED_MESSAGE = "Cambios guardados correctamente";
 export const NOTHING_TO_SAVE_MESSAGE = "No había cambios para guardar.";
 export const OFFLINE_MESSAGE = "Sin conexión. Tus cambios no se perdieron.";
 export const SAVE_ERROR_MESSAGE = "No pudimos guardar los cambios. Inténtalo de nuevo.";
-
-export type SaveState =
-    | { status: "idle" }
-    | { status: "saving" }
-    // saved = cantidad de notas que realmente cambiaron (0 si no había cambios)
-    | { status: "saved"; saved: number }
-    // kind "offline" se muestra en amarillo y "error" en rojo
-    | { status: "error"; kind: "offline" | "error"; message: string };
 
 // Convierte el error en el texto que ve el docente
 function describeError(error: unknown): { kind: "offline" | "error"; message: string } {
