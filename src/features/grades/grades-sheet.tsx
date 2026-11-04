@@ -5,17 +5,17 @@ import type { ReactNode } from "react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
+import { SaveBar } from "@/components/ui/save-bar";
 import { SkeletonLines } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast";
+import { useUnsavedChangesGuard } from "@/lib/use-unsaved-changes-guard";
 import { getRowState, setDraft, summarizeDrafts } from "./grade-drafts";
 import type { GradeDrafts } from "./grade-drafts";
 import { GradeStudentCard } from "./grade-student-card";
 import { GradeStudentRow } from "./grade-student-row";
-import { GradesSaveBar } from "./grades-save-bar";
 import type { CourseRef, GradeRow } from "./types";
 import { useGradesData } from "./use-grades-data";
 import { NOTHING_TO_SAVE_MESSAGE, SAVED_MESSAGE, useSaveGrades } from "./use-save-grades";
-import { useUnsavedChangesGuard } from "./use-unsaved-changes-guard";
 
 const NO_ROWS: GradeRow[] = [];
 
@@ -328,9 +328,10 @@ export function GradesSheet() {
             {body}
 
             {sheet.status === "ready" && rows.length > 0 && (
-                <GradesSaveBar
+                <SaveBar
                     changedCount={summary.changedCount}
                     hasErrors={summary.hasErrors}
+                    errorsText="Corrige las notas marcadas en rojo para poder guardar."
                     saveState={saveState}
                     onCancel={handleCancel}
                     onSave={handleSave}

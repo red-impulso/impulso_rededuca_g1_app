@@ -1,10 +1,19 @@
-import type { SaveState } from "./use-save-grades";
+// Estado del guardado: lo comparten las pantallas que usan esta barra
+export type SaveState =
+    | { status: "idle" }
+    | { status: "saving" }
+    // saved = cantidad de registros que realmente cambiaron (0 si no había cambios)
+    | { status: "saved"; saved: number }
+    // kind "offline" se muestra en amarillo y "error" en rojo
+    | { status: "error"; kind: "offline" | "error"; message: string };
 
-type GradesSaveBarProps = {
-    // Alumnos con cambios sin guardar
+type SaveBarProps = {
+    // Cantidad de cambios sin guardar
     changedCount: number;
-    // true si algún casillero tiene error: no se puede guardar
+    // true si algún dato tiene error: no se puede guardar
     hasErrors: boolean;
+    // Texto que se muestra cuando hasErrors es true (cada pantalla explica lo suyo)
+    errorsText?: string;
     saveState: SaveState;
     onCancel: () => void;
     onSave: () => void;
@@ -18,14 +27,16 @@ function changesText(count: number): string {
     return count === 1 ? "1 cambio sin guardar" : `${count} cambios sin guardar`;
 }
 
-// Barra fija abajo de la planilla (M1-UX, secciones 3 y 4)
-export function GradesSaveBar({
+// Barra de guardado abajo de las planillas (M1-UX, secciones 3 y 4):
+// la usan calificaciones y asistencia
+export function SaveBar({
     changedCount,
     hasErrors,
+    errorsText = "Corrige los datos marcados en rojo para poder guardar.",
     saveState,
     onCancel,
     onSave,
-}: GradesSaveBarProps) {
+}: SaveBarProps) {
     const saving = saveState.status === "saving";
     const canSave = changedCount > 0 && !hasErrors && !saving;
 
@@ -48,7 +59,7 @@ export function GradesSaveBar({
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <p className={`text-sm ${hasErrors ? "text-error" : "text-muted"}`}>
                     {hasErrors
-                        ? "Corrige las notas marcadas en rojo para poder guardar."
+                        ? errorsText
                         : changesText(changedCount)}
                 </p>
 

@@ -1,9 +1,9 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
+import { SaveBar } from "../../components/ui/save-bar";
 import { getRowState } from "./grade-drafts";
 import { GradeStudentCard } from "./grade-student-card";
 import { GradeStudentRow } from "./grade-student-row";
-import { GradesSaveBar } from "./grades-save-bar";
 import type { GradeRow } from "./types";
 
 const row: GradeRow = {
@@ -46,9 +46,10 @@ describe("casillero con un valor fuera de 1–10", () => {
 
     it("deshabilita «Guardar cambios» y explica por qué", () => {
         const html = renderToStaticMarkup(
-            <GradesSaveBar
+            <SaveBar
                 changedCount={1}
                 hasErrors
+                errorsText="Corrige las notas marcadas en rojo para poder guardar."
                 saveState={{ status: "idle" }}
                 onCancel={noop}
                 onSave={noop}
@@ -77,7 +78,7 @@ describe("casillero con una nota válida", () => {
 describe("barra de guardado", () => {
     it("con cambios válidos habilita «Guardar cambios» y cuenta los cambios", () => {
         const html = renderToStaticMarkup(
-            <GradesSaveBar
+            <SaveBar
                 changedCount={2}
                 hasErrors={false}
                 saveState={{ status: "idle" }}
@@ -91,7 +92,7 @@ describe("barra de guardado", () => {
 
     it("sin cambios deshabilita «Guardar cambios»", () => {
         const html = renderToStaticMarkup(
-            <GradesSaveBar
+            <SaveBar
                 changedCount={0}
                 hasErrors={false}
                 saveState={{ status: "idle" }}
@@ -105,7 +106,7 @@ describe("barra de guardado", () => {
 
     it("mientras guarda muestra «Guardando…» y bloquea el botón", () => {
         const html = renderToStaticMarkup(
-            <GradesSaveBar
+            <SaveBar
                 changedCount={2}
                 hasErrors={false}
                 saveState={{ status: "saving" }}
@@ -118,7 +119,7 @@ describe("barra de guardado", () => {
 
     it("sin conexión muestra el aviso en amarillo", () => {
         const html = renderToStaticMarkup(
-            <GradesSaveBar
+            <SaveBar
                 changedCount={2}
                 hasErrors={false}
                 saveState={{
@@ -137,7 +138,7 @@ describe("barra de guardado", () => {
 
     it("un error de la API muestra su mensaje en rojo", () => {
         const html = renderToStaticMarkup(
-            <GradesSaveBar
+            <SaveBar
                 changedCount={2}
                 hasErrors={false}
                 saveState={{ status: "error", kind: "error", message: "Período no encontrado" }}
