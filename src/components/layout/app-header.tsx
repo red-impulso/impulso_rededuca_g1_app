@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { LogoMark, Wordmark } from "@/components/brand/logo";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { getNavItems } from "@/config/navigation";
+import { NotificationBell } from "@/features/notifications/notification-bell";
 import { useSession } from "@/features/session/use-session";
 import { setActiveInstitutionId } from "@/lib/api";
 import { signOut } from "@/lib/supabase/sign-out";
@@ -65,6 +66,8 @@ export function AppHeader() {
         </nav>
 
         <div className="flex shrink-0 items-center gap-2">
+          {/* Campanita: lleva a la bandeja y muestra las no leídas (diseño provisorio de UX) */}
+          <NotificationBell />
           <span className="hidden text-sm text-muted sm:inline">{profile.fullName}</span>
           {/* Botón del menú en celular */}
           <button
