@@ -39,4 +39,11 @@ describe("getNavItems", () => {
             expect(hrefs).not.toContain("/avisos");
         }
     });
+
+    it("solo admin y director ven el tablero, que lleva a /tablero", () => {
+        expect(getNavItems("admin").map((item) => item.href)).toContain("/tablero");
+        expect(getNavItems("director").map((item) => item.href)).toContain("/tablero");
+        expect(getNavItems("teacher").map((item) => item.href)).not.toContain("/tablero");
+        expect(getNavItems("guardian").map((item) => item.href)).not.toContain("/tablero");
+    });
 });

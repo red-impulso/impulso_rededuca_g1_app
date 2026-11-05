@@ -10,6 +10,7 @@ export type NavItem = {
 // Menú por rol: propuesta de Diseño, pendiente de confirmar con el grupo.
 export const navItems: NavItem[] = [
     { label: "Inicio", href: "/inicio", roles: ["admin", "director", "teacher", "guardian"] },
+    { label: "Tablero", href: "/tablero", roles: ["admin", "director"] },
     { label: "Usuarios", href: "/usuarios", roles: ["admin"] },
     { label: "Cursos", href: "/cursos", roles: ["director"] },
     { label: "Mis cursos", href: "/mis-cursos", roles: ["teacher"] },
