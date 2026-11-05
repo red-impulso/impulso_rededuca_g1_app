@@ -30,4 +30,13 @@ describe("getNavItems", () => {
             expect(getNavItems(role).map((item) => item.href)).toContain("/inicio");
         }
     });
+
+    it("todos los roles ven el ítem de comunicados, que lleva a /comunicados", () => {
+        for (const role of ["admin", "director", "teacher", "guardian"] as const) {
+            const hrefs = getNavItems(role).map((item) => item.href);
+            expect(hrefs).toContain("/comunicados");
+            // El enlace viejo ya no existe
+            expect(hrefs).not.toContain("/avisos");
+        }
+    });
 });
