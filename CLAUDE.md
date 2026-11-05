@@ -100,3 +100,71 @@ Reglas del proyecto para cualquier asistente de código o integrante del equipo.
 - Las ramas se crean desde `origin/main` (`git switch -c <rama> origin/main`) y se suben con `git push -u origin <rama>`.
 - Antes de cada commit: `git status -s` y confirmar que no hay archivos `.env*` ni de otra tarea.
 - No crear ramas ni subir cambios sin acuerdo del grupo.
+  PARTE 1 – M2 (va en la rama del PR de M2)
+  1A. REEMPLAZA un renglón: pestañas del hijo
+
+En la sección "Contratos con la API", en el renglón que empieza con - Menú: getNavItems(role)…, cambiá el final:
+
+Dice:
+
+`studentTabs` en `src/config/student-tabs.ts` (hoy tiene "Notas").
+
+Tiene que decir:
+
+`studentTabs` en `src/config/student-tabs.ts` (hoy tiene "Notas" y "Asistencia").
+1B. REEMPLAZA un renglón: componentes compartidos
+
+En la sección "Cómo se arman las pantallas", en el renglón que empieza con - Componentes compartidos en src/components/ui/…, dice:
+
+`toast.tsx` (`ToastProvider` en el layout raíz y `useToast`), `confirm-dialog.tsx`, `skeleton.tsx`, `empty-state.tsx`, `error-state.tsx`.
+
+Tiene que decir (se suma save-bar.tsx):
+
+`toast.tsx` (`ToastProvider` en el layout raíz y `useToast`), `confirm-dialog.tsx`, `skeleton.tsx`, `empty-state.tsx`, `error-state.tsx`, `save-bar.tsx` (barra de guardado de las planillas de notas y de asistencia).
+1C. REEMPLAZA un renglón: dónde vive el guard
+
+En la misma sección, el renglón que empieza con - Para un cambio de pantalla con datos sin guardar… dice que el guard está en src/features/grades/use-unsaved-changes-guard.ts. Ese archivo ya no existe (en M2 pasó a lib/). Tiene que decir:
+
+- Para un cambio de pantalla con datos sin guardar se usa `useUnsavedChangesGuard` (`src/lib/use-unsaved-changes-guard.ts`) con `ConfirmDialog` ("Seguir editando" / "Salir sin guardar"). No puede frenar los botones atrás/adelante del navegador.
+  1D. AGREGA una sección nueva
+
+Pegala justo después de la sección "Calificaciones (M1)" y antes de "Tests":
+
+## Asistencia (M2)
+
+- Código en `src/features/attendance/`. Estados que acepta Back: `present`, `absent`, `late` y `justified`, con letras P / A / T / J (`types.ts`). Los textos y colores de las etiquetas son provisorios hasta que UX los confirme.
+- Endpoints: `GET /attendance?courseId=&date=YYYY-MM-DD` (una fila por alumno: `{ student: { id, firstName, lastName }, status }`, con `status: null` si todavía no se tomó lista), `PUT /attendance` (`{ courseId, date, entries: [{ studentId, status }] }` → `{ saved }`) y `GET /students/:studentId/attendance` (tutor: `{ records: [{ date, status }], summary: { present, absent, late, justified, percentage } }`, con `percentage: null` si no hay registros).
+- Cursos para elegir: docente `GET /me/courses`; admin y director `GET /courses` (el tutor no toma lista).
+- "Hoy" se calcula con la hora de Argentina. No se puede tomar lista de una fecha futura. El botón "Todos presentes" no pisa a los alumnos que ya tienen un estado.
+- Al guardar, el Front manda **solo los alumnos que cambió**: cada guardado vuelve a avisar a los tutores de los ausentes enviados, así que mandar toda la lista re-notificaría de más.
+- Las reglas (`attendance-rules.ts`, `attendance-api.ts`, `student-attendance.ts`) son funciones puras con tests. Las pantallas son `attendance-sheet.tsx` y `attendance-student-row.tsx`, y para el tutor `student-attendance-screen.tsx` y `student-attendance-view.tsx`.
+- Pantalla del docente y directivos: `/asistencia` (`teacher`, `admin`, `director`). Pestaña del tutor: `/hijos/[studentId]/asistencia` (solo `guardian`).
+  PARTE 2 – M3 (va en la rama del PR de M3)
+  2A. AGREGA un renglón en "Idioma"
+
+Pegalo como último renglón de la sección "Idioma":
+
+- Carpetas y archivos en minúscula (`announcements`, no `Announcements`). Windows no distingue mayúsculas, pero Linux (CI y Vercel) sí: una carpeta con otra mayúscula pasa en local y rompe el build allá.
+  2B. AGREGA un renglón en "Tests"
+
+Pegalo como último renglón de la sección "Tests":
+
+- Un componente que se prueba con `renderToStaticMarkup` no puede importar con `@/` (ni de forma indirecta). Por eso los componentes de dibujo (`announcement-card.tsx`, `announcement-form-fields.tsx`) solo importan con rutas relativas, y los que usan `@/` (`announcements-screen.tsx`, `announcement-form.tsx`, los hooks) no llevan test.
+  2C. AGREGA una sección nueva
+
+Pegala justo después de la sección "Tests" y antes de "Flujo de trabajo":
+
+## Comunicados (M3)
+
+- Código en `src/features/announcements/`. Pantalla `/comunicados` (todos los roles; el ítem del menú sigue llamándose "Avisos", el nombre final lo decide UX, y desde M3 lleva a `/comunicados`).
+- Endpoints: `GET /announcements` (todos los roles, del más nuevo al más viejo: `{ id, scope, title, body, createdAt, author: { id, fullName }, course: { id, name } | null, student: { id, firstName, lastName } | null }`; `author.fullName` y `course.name` pueden venir `null`) y `POST /announcements` (`{ scope, courseId?, studentId?, title, body }`).
+- La respuesta del `POST` es el registro crudo de la base (snake_case), **no** tiene la forma de la lista: después de publicar hay que volver a pedir `GET /announcements`.
+- Quién ve qué (lo filtra Back, el Front no filtra): admin y director ven todo; el docente ve institución y sus cursos; el tutor ve institución, los cursos de sus hijos y los dirigidos a ellos.
+- Quién publica (`allowedScopes` en `announcements-rules.ts`): admin y director en institución o curso; el docente solo en un curso donde dicta materias; el tutor nunca. Cursos para elegir: docente `GET /me/courses`; admin y director `GET /courses`.
+- Alcances: el Front crea solo `institution` y `course`. El de `student` lo soporta Back, pero el Front no tiene lista de alumnos; si llega uno, se muestra en la lista.
+- Back no tiene límites de largo, paginación, "leído", categorías, detalle, edición ni borrado. Un comunicado publicado no se puede editar ni borrar, y cada publicación puede avisar a los tutores: por eso el formulario pide confirmación y el hook de publicar ignora un segundo toque mientras el primero está en curso.
+- El título tiene un máximo de 120 caracteres (lo pide UX; Back no lo valida, se valida en el Front). Los errores de Back son técnicos: no se muestran, se usan los textos propios de `announcements-api.ts`.
+- El texto del comunicado se muestra siempre como **texto** (React lo escapa; `whitespace-pre-line` respeta los saltos de línea). Nunca `dangerouslySetInnerHTML`. La fecha se muestra en hora de Argentina (`formatDate`).
+- Zona provisoria de UX: todos los textos y colores de comunicados que UX todavía no confirmó están en `announcements-ui.ts`. Cuando UX los defina se cambian solo ahí.
+- Archivos: `types.ts` (tipos), `announcements-rules.ts` (reglas puras), `announcements-api.ts` (rutas, textos de error y conversión de las respuestas), `use-announcements.ts`, `use-announcement-courses.ts` y `use-publish-announcement.ts` (datos), `announcement-card.tsx` (tarjeta), `announcement-form-state.ts` y `announcement-form-fields.tsx` (formulario puro), `announcement-form.tsx` (formulario con estado) y `announcements-screen.tsx` (pantalla).
+- Pendiente: avisar al salir con texto sin publicar al tocar enlaces del menú (hoy solo avisa el botón Cancelar y el cierre de pestaña; se puede usar `useUnsavedChangesGuard`). Pendientes de UX: nombres de los alcances, etiqueta del menú, diseño del formulario, categorías y colores. Pendientes de Back: límites de largo y CORS para `localhost:3001`.
