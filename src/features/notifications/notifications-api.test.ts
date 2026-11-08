@@ -4,6 +4,8 @@ import {
     READ_ALL_PATH,
     UNREAD_COUNT_PATH,
     describeLoadError,
+    deletePath,
+    describeDeleteError,
     describeMarkAllError,
     describeMarkError,
     markReadPath,
@@ -15,6 +17,9 @@ import {
 import {
     LOAD_ERROR_TEXT,
     MARK_ALL_ERROR_MESSAGE,
+    DELETE_ERROR_MESSAGE,
+    DELETE_NOT_FOUND_MESSAGE,
+    DELETE_OFFLINE_MESSAGE,
     MARK_ALL_OFFLINE_MESSAGE,
     MARK_ERROR_MESSAGE,
     MARK_NOT_FOUND_MESSAGE,
@@ -27,6 +32,8 @@ const valid = {
     id: "n1",
     title: "Nueva nota",
     body: "Nueva nota en Matemática",
+    type: "grade",
+    studentId: null,
     readAt: null,
     createdAt: "2026-11-04T15:00:00Z",
 };
@@ -107,6 +114,17 @@ describe("parseNotifications", () => {
         expect(list?.[0].readAt).toBeNull();
     });
 
+    it("lee type y studentId; un tipo raro o ausente queda como general", () => {
+        const list = parseNotifications([
+            { ...valid, id: "a", type: "attendance", studentId: "alu-1" },
+            { ...valid, id: "b", type: "otro", studentId: 7 },
+            { ...valid, id: "c", type: undefined, studentId: undefined },
+        ]);
+        expect(list?.[0]).toMatchObject({ type: "attendance", studentId: "alu-1" });
+        expect(list?.[1]).toMatchObject({ type: "general", studentId: null });
+        expect(list?.[2]).toMatchObject({ type: "general", studentId: null });
+    });
+
     it("saltea los elementos rotos y deja los buenos", () => {
         const list = parseNotifications([
             null,
@@ -148,5 +166,19 @@ describe("parseUnreadCount, parseReadAll y parseMarkRead", () => {
         expect(parseMarkRead({ success: false })).toBe(false);
         expect(parseMarkRead({})).toBe(false);
         expect(parseMarkRead(null)).toBe(false);
+    });
+});
+
+describe("eliminar", () => {
+    it("la ruta lleva el id escapado", () => {
+        expect(deletePath("n1")).toBe("/notifications/n1");
+        expect(deletePath("a/b")).toBe("/notifications/a%2Fb");
+    });
+
+    it("sin conexión, 404 y el resto", () => {
+        expect(describeDeleteError(0)).toEqual({ kind: "offline", message: DELETE_OFFLINE_MESSAGE });
+        expect(describeDeleteError(404)).toEqual({ kind: "error", message: DELETE_NOT_FOUND_MESSAGE });
+        expect(describeDeleteError(500).message).toBe(DELETE_ERROR_MESSAGE);
+        expect(describeDeleteError(null).message).toBe(DELETE_ERROR_MESSAGE);
     });
 });

@@ -8,6 +8,8 @@ export type SubjectPeriodGrade = {
     periodId: string;
     periodName: string;
     value: number | null;
+    // Observación del docente; null si no tiene (o si está vacía)
+    observations: string | null;
 };
 
 export type SubjectGrades = {
@@ -38,6 +40,7 @@ export function groupGradesBySubject(grades: StudentGrade[]): SubjectGrades[] {
             periodId: grade.period.id,
             periodName: grade.period.name,
             value: grade.value,
+            observations: grade.observations?.trim() ? grade.observations.trim() : null,
         });
     }
 

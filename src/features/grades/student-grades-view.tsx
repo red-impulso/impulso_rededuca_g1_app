@@ -67,6 +67,18 @@ export function StudentGradesView({ subjects, summary }: StudentGradesViewProps)
                                     </li>
                                 ))}
                             </ul>
+                            {/* El texto se muestra siempre como texto (React lo escapa) */}
+                            {subject.periods
+                                .filter((period) => period.observations !== null)
+                                .map((period) => (
+                                    <p
+                                        key={period.periodId}
+                                        className="mt-2 whitespace-pre-line break-words text-sm text-ink"
+                                    >
+                                        <span className="font-semibold">{`Observación (${period.periodName}): `}</span>
+                                        {period.observations}
+                                    </p>
+                                ))}
                         </li>
                     ))}
                 </ul>

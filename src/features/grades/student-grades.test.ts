@@ -33,8 +33,8 @@ describe("groupGradesBySubject", () => {
     it("junta los períodos de cada materia y calcula su promedio", () => {
         const math = groupGradesBySubject(grades).find((s) => s.subjectName === "Matemática");
         expect(math?.periods).toEqual([
-            { periodId: "p-1.er trimestre", periodName: "1.er trimestre", value: 8 },
-            { periodId: "p-2.º trimestre", periodName: "2.º trimestre", value: 9 },
+            { periodId: "p-1.er trimestre", periodName: "1.er trimestre", value: 8, observations: null },
+            { periodId: "p-2.º trimestre", periodName: "2.º trimestre", value: 9, observations: null },
         ]);
         expect(math?.average).toBe(8.5);
     });
@@ -62,5 +62,20 @@ describe("summarizeStudent", () => {
             approved: 0,
             pending: 0,
         });
+    });
+});
+
+describe("observaciones del docente", () => {
+    it("pasan al período; vacías o ausentes quedan en null", () => {
+        const subjects = groupGradesBySubject([
+            { ...grade("Lengua", "1.er trimestre", 7), observations: "  Participa mucho " },
+            { ...grade("Lengua", "2.º trimestre", 8), observations: "   " },
+            { ...grade("Lengua", "3.er trimestre", 9) },
+        ]);
+        expect(subjects[0].periods.map((period) => period.observations)).toEqual([
+            "Participa mucho",
+            null,
+            null,
+        ]);
     });
 });

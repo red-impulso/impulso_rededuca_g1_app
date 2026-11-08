@@ -151,3 +151,66 @@ describe("barra de guardado", () => {
         expect(html).toContain("Período no encontrado");
     });
 });
+
+describe("observación del docente", () => {
+    const state = getRowState(row, {});
+
+    it("en la tarjeta y en la fila aparece el campo con su contador", () => {
+        const card = renderToStaticMarkup(
+            <ul>
+                <GradeStudentCard
+                    row={row}
+                    state={state}
+                    onChange={noop}
+                    observation={{ text: "Buen trabajo", changed: false, error: null }}
+                    onObservationChange={noop}
+                />
+            </ul>,
+        );
+        expect(card).toContain("Observación de Aguirre, Sofía");
+        expect(card).toContain("Buen trabajo");
+        expect(card).toContain("12/500");
+
+        const tableRow = renderToStaticMarkup(
+            <table>
+                <tbody>
+                    <GradeStudentRow
+                        row={row}
+                        state={state}
+                        onChange={noop}
+                        observation={{ text: "", changed: false, error: null }}
+                        onObservationChange={noop}
+                    />
+                </tbody>
+            </table>,
+        );
+        expect(tableRow).toContain("Observación de Aguirre, Sofía");
+        expect(tableRow).toContain("0/500");
+    });
+
+    it("con error se avisa con role=alert y borde rojo", () => {
+        const html = renderToStaticMarkup(
+            <ul>
+                <GradeStudentCard
+                    row={row}
+                    state={state}
+                    onChange={noop}
+                    observation={{ text: "x", changed: true, error: "La observación admite hasta 500 caracteres." }}
+                    onObservationChange={noop}
+                />
+            </ul>,
+        );
+        expect(html).toContain('role="alert"');
+        expect(html).toContain("La observación admite hasta 500 caracteres.");
+        expect(html).toContain('aria-invalid="true"');
+    });
+
+    it("sin la prop observation no se dibuja el campo", () => {
+        const html = renderToStaticMarkup(
+            <ul>
+                <GradeStudentCard row={row} state={state} onChange={noop} />
+            </ul>,
+        );
+        expect(html).not.toContain("Observación");
+    });
+});

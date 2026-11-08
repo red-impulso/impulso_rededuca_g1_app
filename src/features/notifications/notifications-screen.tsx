@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from "react";
 import type { ReactNode } from "react";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { SkeletonLines } from "@/components/ui/skeleton";
@@ -10,6 +11,11 @@ import { NotificationsList } from "./notifications-list";
 import { countUnread } from "./notifications-rules";
 import {
     ALL_READ_MESSAGE,
+    DELETED_MESSAGE,
+    DELETE_CANCEL_LABEL,
+    DELETE_DIALOG_DESCRIPTION,
+    DELETE_DIALOG_TITLE,
+    DELETE_LABEL,
     EMPTY_DESCRIPTION,
     EMPTY_TITLE,
     LOADING_TEXT,
@@ -17,6 +23,7 @@ import {
     MARK_ALL_LABEL,
 } from "./notifications-ui";
 import type { NotificationItem } from "./types";
+import { useDeleteNotification } from "./use-delete-notification";
 import { useMarkNotifications } from "./use-mark-notifications";
 import type { MarkResult } from "./use-mark-notifications";
 import { useNotifications } from "./use-notifications";
@@ -36,7 +43,10 @@ function LoadingCard() {
 export function NotificationsScreen() {
     const { state, reload, update } = useNotifications();
     const { markOne, markAll, pendingIds, markingAll } = useMarkNotifications(update);
+    const { remove, pendingIds: deletingIds } = useDeleteNotification(update);
     const { showToast } = useToast();
+    // Notificación que se pidió eliminar y espera la confirmación
+    const [toDelete, setToDelete] = useState<NotificationItem | null>(null);
     // Hora de referencia para "Hace X minutos"; se toma al abrir la pantalla
     const [now] = useState(() => new Date());
 
@@ -63,6 +73,17 @@ export function NotificationsScreen() {
         [markOne],
     );
 
+    // Eliminar pide confirmación; recién al confirmar se llama a Back
+    const handleConfirmDelete = useCallback(() => {
+        const item = toDelete;
+        setToDelete(null);
+        if (!item) return;
+        void remove(item).then((result) => {
+            if (result?.ok) showToast(DELETED_MESSAGE);
+            else if (result) showToast(result.message);
+        });
+    }, [toDelete, remove, showToast]);
+
     const items = state.status === "ready" ? state.items : [];
     const unread = countUnread(items);
 
@@ -88,6 +109,8 @@ export function NotificationsScreen() {
                 refreshing={state.refreshing}
                 onOpen={handleOpen}
                 onMarkRead={handleMarkRead}
+                onDelete={setToDelete}
+                deletingIds={deletingIds}
             />
         );
     }
@@ -105,6 +128,16 @@ export function NotificationsScreen() {
                 </button>
             )}
             {content}
+            <ConfirmDialog
+                open={toDelete !== null}
+                title={DELETE_DIALOG_TITLE}
+                description={DELETE_DIALOG_DESCRIPTION}
+                confirmLabel={DELETE_LABEL}
+                cancelLabel={DELETE_CANCEL_LABEL}
+                destructive
+                onConfirm={handleConfirmDelete}
+                onCancel={() => setToDelete(null)}
+            />
         </div>
     );
 }

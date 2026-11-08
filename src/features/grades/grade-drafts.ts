@@ -9,6 +9,13 @@ import type { GradeRow, SaveGradesEntry } from "./types";
 // Si no hay entrada para un alumno, se muestra la nota que vino de Back.
 export type GradeDrafts = Record<string, string>;
 
+// Lo que escribió el docente en las observaciones: studentId → texto
+export type ObservationDrafts = Record<string, string>;
+
+// Back rechaza (400) observaciones de más de 500 caracteres
+export const MAX_OBSERVATION_LENGTH = 500;
+export const OBSERVATION_TOO_LONG_MESSAGE = `La observación admite hasta ${MAX_OBSERVATION_LENGTH} caracteres.`;
+
 // Back ignora los valores vacíos: una nota ya cargada no se puede borrar
 export const CANNOT_CLEAR_MESSAGE = "No se puede dejar vacía una nota ya cargada.";
 
@@ -61,6 +68,43 @@ export function setDraft(drafts: GradeDrafts, row: GradeRow, text: string): Grad
     return next;
 }
 
+export type ObservationState = {
+    // Texto que se muestra en el casillero
+    text: string;
+    // true si difiere de lo guardado (sin contar espacios al principio y al final)
+    changed: boolean;
+    // Mensaje de error; null si está bien
+    error: string | null;
+};
+
+function originalObservation(row: GradeRow): string {
+    return row.observations ?? "";
+}
+
+// Estado de la observación de un alumno
+export function getObservationState(row: GradeRow, drafts: ObservationDrafts): ObservationState {
+    const text = drafts[row.student.id] ?? originalObservation(row);
+    return {
+        text,
+        changed: text.trim() !== originalObservation(row).trim(),
+        error: text.length > MAX_OBSERVATION_LENGTH ? OBSERVATION_TOO_LONG_MESSAGE : null,
+    };
+}
+
+// Guarda lo que escribió el docente en una observación.
+// Si queda igual a lo guardado, deja de contar como cambio.
+export function setObservationDraft(
+    drafts: ObservationDrafts,
+    row: GradeRow,
+    text: string,
+): ObservationDrafts {
+    const next = { ...drafts, [row.student.id]: text };
+    if (!getObservationState(row, next).changed && text.length <= MAX_OBSERVATION_LENGTH) {
+        delete next[row.student.id];
+    }
+    return next;
+}
+
 export type DraftsSummary = {
     // Cantidad de alumnos con cambios sin guardar (incluye los inválidos)
     changedCount: number;
@@ -70,19 +114,32 @@ export type DraftsSummary = {
     entries: SaveGradesEntry[];
 };
 
-export function summarizeDrafts(rows: GradeRow[], drafts: GradeDrafts): DraftsSummary {
+export function summarizeDrafts(
+    rows: GradeRow[],
+    drafts: GradeDrafts,
+    observationDrafts: ObservationDrafts = {},
+): DraftsSummary {
     let changedCount = 0;
     let hasErrors = false;
     const entries: SaveGradesEntry[] = [];
 
     for (const row of rows) {
         const state = getRowState(row, drafts);
-        if (state.changed) changedCount += 1;
-        if (state.error) {
+        const observation = getObservationState(row, observationDrafts);
+        if (state.changed || observation.changed) changedCount += 1;
+        if (state.error || observation.error) {
             hasErrors = true;
-        } else if (state.changed && state.value !== null) {
-            entries.push({ studentId: row.student.id, value: state.value });
+            continue;
         }
+        if (!(state.changed && state.value !== null) && !observation.changed) continue;
+
+        // Si solo cambió la observación se manda la nota que ya tenía (con null Back la borraría)
+        const entry: SaveGradesEntry = {
+            studentId: row.student.id,
+            value: state.changed ? state.value : row.value,
+        };
+        if (observation.changed) entry.observations = observation.text.trim();
+        entries.push(entry);
     }
 
     return { changedCount, hasErrors, entries };

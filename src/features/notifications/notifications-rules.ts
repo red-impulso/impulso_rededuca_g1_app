@@ -106,8 +106,15 @@ export function timeAgo(iso: string, now: Date = new Date()): string {
     return `${hour}:${minute}`;
 }
 
-// A dónde lleva una notificación al tocarla. Título desconocido → la bandeja.
+// A dónde lleva una notificación al tocarla (la ven los tutores).
+// Por tipo y alumno: nota → /hijos/<id>/notas, inasistencia → /hijos/<id>/asistencia.
+// Sin alumno, la lista de hijos. Las notificaciones viejas vienen como "general": se deduce
+// del título. Título desconocido → la bandeja.
 export function notificationHref(item: NotificationItem): string {
+    const student = item.studentId ? encodeURIComponent(item.studentId) : null;
+    if (item.type === "announcement") return "/comunicados";
+    if (item.type === "grade") return student ? `/hijos/${student}/notas` : "/hijos";
+    if (item.type === "attendance") return student ? `/hijos/${student}/asistencia` : "/hijos";
     return DESTINATION_BY_TITLE[item.title.trim()] ?? NOTIFICATIONS_HREF;
 }
 
@@ -125,6 +132,22 @@ export function markAllAsRead(items: NotificationItem[], readAt: string): Notifi
 export function restoreUnread(items: NotificationItem[], ids: string[]): NotificationItem[] {
     const restore = new Set(ids);
     return items.map((item) => (restore.has(item.id) ? { ...item, readAt: null } : item));
+}
+
+// Lista sin la notificación eliminada (para actualizar la pantalla sin esperar a Back)
+export function removeNotification(items: NotificationItem[], id: string): NotificationItem[] {
+    return items.filter((item) => item.id !== id);
+}
+
+// Vuelve a poner una notificación que no se pudo eliminar, en su lugar (de la más nueva
+// a la más vieja). Si ya está en la lista, no la repite.
+export function restoreNotification(items: NotificationItem[], item: NotificationItem): NotificationItem[] {
+    if (items.some((existing) => existing.id === item.id)) return items;
+    const time = (value: NotificationItem) => {
+        const parsed = new Date(value.createdAt).getTime();
+        return Number.isNaN(parsed) ? 0 : parsed;
+    };
+    return [...items, item].sort((a, b) => time(b) - time(a));
 }
 
 // Contador después de sumar o restar (nunca menos de 0, siempre entero)

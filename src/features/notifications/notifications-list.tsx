@@ -11,10 +11,23 @@ type NotificationsListProps = {
     refreshing: boolean;
     onOpen: (item: NotificationItem) => void;
     onMarkRead: (item: NotificationItem) => void;
+    // Eliminar. Si no se pasa, las tarjetas no muestran el botón.
+    onDelete?: (item: NotificationItem) => void;
+    // Ids que se están eliminando
+    deletingIds?: string[];
 };
 
 // Bandeja agrupada por día (Hoy, Ayer o la fecha), en el orden que manda Back
-export function NotificationsList({ items, now, pendingIds, refreshing, onOpen, onMarkRead }: NotificationsListProps) {
+export function NotificationsList({
+    items,
+    now,
+    pendingIds,
+    refreshing,
+    onOpen,
+    onMarkRead,
+    onDelete,
+    deletingIds = [],
+}: NotificationsListProps) {
     const groups = groupByDay(items, now);
 
     return (
@@ -33,6 +46,8 @@ export function NotificationsList({ items, now, pendingIds, refreshing, onOpen, 
                                 pending={pendingIds.includes(item.id)}
                                 onOpen={onOpen}
                                 onMarkRead={onMarkRead}
+                                onDelete={onDelete}
+                                deleting={deletingIds.includes(item.id)}
                             />
                         ))}
                     </ul>

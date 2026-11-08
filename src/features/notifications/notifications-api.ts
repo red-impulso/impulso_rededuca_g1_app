@@ -1,6 +1,9 @@
 import {
     LOAD_ERROR_TEXT,
     MARK_ALL_ERROR_MESSAGE,
+    DELETE_ERROR_MESSAGE,
+    DELETE_NOT_FOUND_MESSAGE,
+    DELETE_OFFLINE_MESSAGE,
     MARK_ALL_OFFLINE_MESSAGE,
     MARK_ERROR_MESSAGE,
     MARK_NOT_FOUND_MESSAGE,
@@ -8,7 +11,7 @@ import {
     OFFLINE_TEXT,
     SERVER_ERROR_TEXT,
 } from "./notifications-ui";
-import type { NotificationItem } from "./types";
+import type { NotificationItem, NotificationType } from "./types";
 
 // Rutas y textos de la API de notificaciones.
 // Son funciones puras (sin React ni fetch) para poder probarlas fácil.
@@ -23,6 +26,11 @@ export const READ_ALL_PATH = "/notifications/read-all";
 // POST /notifications/:id/read → { success: true } (404 si no es del usuario)
 export function markReadPath(id: string): string {
     return `/notifications/${encodeURIComponent(id)}/read`;
+}
+
+// DELETE /notifications/:id → 204 (404 si no existe o no es del usuario)
+export function deletePath(id: string): string {
+    return `/notifications/${encodeURIComponent(id)}`;
 }
 
 export type ErrorKind = "offline" | "error";
@@ -48,14 +56,28 @@ export function describeMarkAllError(status: number | null): { kind: ErrorKind; 
     return { kind: "error", message: MARK_ALL_ERROR_MESSAGE };
 }
 
+// Texto del error al eliminar una notificación
+export function describeDeleteError(status: number | null): { kind: ErrorKind; message: string } {
+    if (status === 0) return { kind: "offline", message: DELETE_OFFLINE_MESSAGE };
+    if (status === 404) return { kind: "error", message: DELETE_NOT_FOUND_MESSAGE };
+    return { kind: "error", message: DELETE_ERROR_MESSAGE };
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+const NOTIFICATION_TYPES: readonly NotificationType[] = ["grade", "attendance", "announcement", "general"];
+
+// Un tipo desconocido o ausente se trata como "general"
+function parseType(value: unknown): NotificationType {
+    return NOTIFICATION_TYPES.find((type) => type === value) ?? "general";
 }
 
 // Convierte un elemento de GET /notifications, o null si le faltan los datos básicos
 function parseNotification(value: unknown): NotificationItem | null {
     if (!isRecord(value)) return null;
-    const { id, title, body, readAt, createdAt } = value;
+    const { id, title, body, type, studentId, readAt, createdAt } = value;
     if (typeof id !== "string" || !id) return null;
     if (typeof title !== "string" || typeof createdAt !== "string") return null;
     return {
@@ -63,6 +85,8 @@ function parseNotification(value: unknown): NotificationItem | null {
         title,
         // Si falta el cuerpo se muestra solo el título
         body: typeof body === "string" ? body : "",
+        type: parseType(type),
+        studentId: typeof studentId === "string" && studentId ? studentId : null,
         readAt: typeof readAt === "string" && readAt ? readAt : null,
         createdAt,
     };

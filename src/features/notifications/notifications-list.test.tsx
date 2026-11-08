@@ -12,6 +12,8 @@ function makeItem(overrides: Partial<NotificationItem> = {}): NotificationItem {
         id: "n1",
         title: "Nueva nota",
         body: "Nueva nota en Matemática",
+        type: "grade",
+        studentId: null,
         readAt: null,
         createdAt: "2026-11-04T14:00:00Z",
         ...overrides,

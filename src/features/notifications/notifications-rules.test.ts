@@ -9,6 +9,8 @@ import {
     markAllAsRead,
     markOneAsRead,
     notificationHref,
+    removeNotification,
+    restoreNotification,
     restoreUnread,
     timeAgo,
 } from "./notifications-rules";
@@ -20,6 +22,8 @@ function makeItem(overrides: Partial<NotificationItem> = {}): NotificationItem {
         id: "n1",
         title: "Nueva nota",
         body: "Nueva nota en Matemática",
+        type: "grade",
+        studentId: null,
         readAt: null,
         createdAt: "2026-11-04T15:00:00Z",
         ...overrides,
@@ -135,14 +139,30 @@ describe("timeAgo", () => {
 });
 
 describe("notificationHref", () => {
-    it("cada título conocido lleva a su pantalla", () => {
-        expect(notificationHref(makeItem({ title: "Nuevo comunicado" }))).toBe("/comunicados");
-        expect(notificationHref(makeItem({ title: "Nueva nota" }))).toBe("/hijos");
-        expect(notificationHref(makeItem({ title: "Inasistencia registrada" }))).toBe("/hijos");
+    it("nota e inasistencia llevan a la pestaña del hijo", () => {
+        expect(notificationHref(makeItem({ type: "grade", studentId: "alu-1" }))).toBe("/hijos/alu-1/notas");
+        expect(notificationHref(makeItem({ type: "attendance", studentId: "alu-1" }))).toBe(
+            "/hijos/alu-1/asistencia",
+        );
     });
 
-    it("un título desconocido se queda en la bandeja", () => {
-        expect(notificationHref(makeItem({ title: "Otra cosa" }))).toBe(NOTIFICATIONS_HREF);
+    it("nota o inasistencia sin alumno llevan a la lista de hijos", () => {
+        expect(notificationHref(makeItem({ type: "grade", studentId: null }))).toBe("/hijos");
+        expect(notificationHref(makeItem({ type: "attendance", studentId: null }))).toBe("/hijos");
+    });
+
+    it("el comunicado lleva a /comunicados", () => {
+        expect(notificationHref(makeItem({ type: "announcement", title: "Nuevo comunicado" }))).toBe("/comunicados");
+    });
+
+    it("las viejas (general) se deducen del título", () => {
+        expect(notificationHref(makeItem({ type: "general", title: "Nuevo comunicado" }))).toBe("/comunicados");
+        expect(notificationHref(makeItem({ type: "general", title: "Nueva nota" }))).toBe("/hijos");
+        expect(notificationHref(makeItem({ type: "general", title: "Inasistencia registrada" }))).toBe("/hijos");
+    });
+
+    it("general con título desconocido se queda en la bandeja", () => {
+        expect(notificationHref(makeItem({ type: "general", title: "Otra cosa" }))).toBe(NOTIFICATIONS_HREF);
         expect(NOTIFICATIONS_HREF).toBe("/notificaciones");
     });
 });
@@ -202,5 +222,32 @@ describe("adjustCount", () => {
     it("valores raros quedan en 0", () => {
         expect(adjustCount(Number.NaN, 0)).toBe(0);
         expect(adjustCount(-3, 0)).toBe(0);
+    });
+});
+
+describe("removeNotification y restoreNotification", () => {
+    const items = [
+        makeItem({ id: "a", createdAt: "2026-11-04T15:00:00Z" }),
+        makeItem({ id: "b", createdAt: "2026-11-03T15:00:00Z" }),
+        makeItem({ id: "c", createdAt: "2026-11-02T15:00:00Z" }),
+    ];
+
+    it("saca solo la notificación pedida", () => {
+        expect(removeNotification(items, "b").map((item) => item.id)).toEqual(["a", "c"]);
+        expect(removeNotification(items, "no-existe")).toEqual(items);
+    });
+
+    it("al volver a ponerla queda en su lugar (de la más nueva a la más vieja)", () => {
+        const without = removeNotification(items, "b");
+        expect(restoreNotification(without, items[1]).map((item) => item.id)).toEqual(["a", "b", "c"]);
+        expect(restoreNotification(removeNotification(items, "a"), items[0]).map((item) => item.id)).toEqual([
+            "a",
+            "b",
+            "c",
+        ]);
+    });
+
+    it("no la repite si ya está", () => {
+        expect(restoreNotification(items, items[0])).toEqual(items);
     });
 });

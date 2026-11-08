@@ -18,6 +18,8 @@ function makeItem(overrides: Partial<NotificationItem> = {}): NotificationItem {
         id: "n1",
         title: "Nueva nota",
         body: "Nueva nota en Matemática",
+        type: "grade",
+        studentId: null,
         readAt: null,
         createdAt: "2026-11-04T14:15:00Z",
         ...overrides,
@@ -71,9 +73,9 @@ describe("notificación leída", () => {
 
 describe("destino al tocarla", () => {
     it("cada título lleva a su pantalla", () => {
-        expect(render(makeItem({ title: "Nuevo comunicado" }))).toContain('href="/comunicados"');
-        expect(render(makeItem({ title: "Inasistencia registrada" }))).toContain('href="/hijos"');
-        expect(render(makeItem({ title: "Otra cosa" }))).toContain('href="/notificaciones"');
+        expect(render(makeItem({ type: "announcement", title: "Nuevo comunicado" }))).toContain('href="/comunicados"');
+        expect(render(makeItem({ type: "attendance", studentId: "alu-1", title: "Inasistencia registrada" }))).toContain('href="/hijos/alu-1/asistencia"');
+        expect(render(makeItem({ type: "general", title: "Otra cosa" }))).toContain('href="/notificaciones"');
     });
 });
 
@@ -103,5 +105,41 @@ describe("estilos", () => {
         const html = render(makeItem());
         expect(html).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
         expect(html).not.toContain("[#");
+    });
+});
+
+describe("botón Eliminar", () => {
+    function renderWithDelete(item: NotificationItem, deleting = false) {
+        return renderToStaticMarkup(
+            <ul>
+                <NotificationCard
+                    item={item}
+                    now={NOW}
+                    pending={false}
+                    onOpen={() => {}}
+                    onMarkRead={() => {}}
+                    onDelete={() => {}}
+                    deleting={deleting}
+                />
+            </ul>,
+        );
+    }
+
+    it("aparece en leídas y no leídas, con nombre accesible y texto (no solo color)", () => {
+        for (const item of [makeItem(), makeItem({ readAt: "2026-11-04T14:30:00Z" })]) {
+            const html = renderWithDelete(item);
+            expect(html).toContain(">Eliminar<");
+            expect(html).toContain('aria-label="Eliminar notificación: Nueva nota"');
+        }
+    });
+
+    it("mientras se elimina queda deshabilitado y dice Eliminando…", () => {
+        const html = renderWithDelete(makeItem(), true);
+        expect(html).toContain("Eliminando…");
+        expect(html).toContain("disabled");
+    });
+
+    it("sin la prop onDelete no se dibuja el botón", () => {
+        expect(render(makeItem())).not.toContain("Eliminar");
     });
 });
