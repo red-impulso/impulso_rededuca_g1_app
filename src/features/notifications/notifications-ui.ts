@@ -51,6 +51,19 @@ export const MARK_ALL_LABEL = "Marcar todas como leídas";
 export const MARKING_LABEL = "Marcando…";
 export const RETRY_LABEL = "Reintentar";
 
+// ---- Pendiente UX: eliminar una notificación ----
+export const DELETE_LABEL = "Eliminar";
+export const DELETING_LABEL = "Eliminando…";
+export const DELETE_DIALOG_TITLE = "¿Eliminar la notificación?";
+export const DELETE_DIALOG_DESCRIPTION = "Se borra de tu bandeja y no se puede recuperar.";
+export const DELETE_CANCEL_LABEL = "Cancelar";
+export const DELETED_MESSAGE = "Notificación eliminada.";
+export const DELETE_OFFLINE_MESSAGE = "Sin conexión. No pudimos eliminar la notificación.";
+export const DELETE_NOT_FOUND_MESSAGE = "Esa notificación ya no está disponible.";
+export const DELETE_ERROR_MESSAGE = "No pudimos eliminar la notificación. Probá de nuevo en unos minutos.";
+// Borde y letra del botón: rojo del proyecto (no es solo color: lleva el texto "Eliminar")
+export const DELETE_BUTTON_CLASS = "text-error";
+
 // ---- Pendiente UX: estados de la bandeja ----
 export const LOADING_TEXT = "Cargando notificaciones…";
 export const EMPTY_TITLE = "No tenés notificaciones pendientes";
@@ -68,9 +81,10 @@ export const MARK_ALL_OFFLINE_MESSAGE = "Sin conexión. No pudimos marcar las no
 export const MARK_ALL_ERROR_MESSAGE =
     "No pudimos marcar las notificaciones como leídas. Probá de nuevo en unos minutos.";
 
-// ---- Pendiente Back: destino al tocar una notificación ----
-// Back no manda tipo ni destino: se deduce del título que arma Back
-// (notifications.service.ts). Cuando Back agregue un "type", se reemplaza por eso.
+// ---- Destino al tocar una notificación ----
+// Back ya manda "type" y "studentId": el destino se arma con eso (notifications-rules.ts).
+// Esta tabla queda solo para las notificaciones viejas, que Back dejó como "general":
+// se deduce del título que arma Back (notifications.service.ts).
 export const DESTINATION_BY_TITLE: Record<string, string> = {
     "Nuevo comunicado": "/comunicados",
     "Nueva nota": "/hijos",

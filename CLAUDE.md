@@ -13,6 +13,7 @@ Reglas del proyecto para cualquier asistente de código o integrante del equipo.
 
 - Código, nombres de archivos, tipos y funciones en inglés.
 - Comentarios, textos visibles y rutas de URL en español.
+- Carpetas y archivos en minúscula (`announcements`, no `Announcements`). Windows no distingue mayúsculas, pero Linux (CI y Vercel) sí: una carpeta con otra mayúscula pasa en local y rompe el build allá.
 
 ## Datos y seguridad
 
@@ -59,7 +60,7 @@ Reglas del proyecto para cualquier asistente de código o integrante del equipo.
 
 ## Entorno local
 
-- API de Back en `http://localhost:3000`; el Front se levanta con `npm run dev -- -p 3001`. CI corre el Front solo en el puerto 3000.
+- El Front corre en `http://localhost:3000` (`npm run dev`): es el único origen local que Back permite en CORS (`main.ts`). No usar el puerto 3001. Si se levanta Back en la misma máquina, Back usa otro puerto (variable `PORT`, por ejemplo `PORT=4000`) y `NEXT_PUBLIC_API_URL` apunta a ese puerto; si no, se usa la URL de Back en Render. CI también corre el Front en el puerto 3000.
 
 ## Contratos con la API
 
@@ -69,7 +70,7 @@ Reglas del proyecto para cualquier asistente de código o integrante del equipo.
 - `GET /me/subjects` y `GET /me/courses` responden **solo al rol `teacher`**; `GET /me/students` solo a `guardian`. Las pantallas de otros roles muestran un aviso en vez de llamar a la API.
 - `apiFetch<T>(path, init?)` en `src/lib/api.ts`: agrega `Authorization` (token de la sesión de Supabase) y `X-Institution-Id` (membresía activa, la fija `SessionProvider` con `setActiveInstitutionId`), usa `NEXT_PUBLIC_API_URL` y lanza `ApiError { status, message }` si la respuesta no es 2xx (`status: 0` si no hay conexión).
 - Sesión: `SessionProvider` (`src/features/session/session-provider.tsx`) llama a `GET /me` y vive en `src/app/(panel)/layout.tsx`, no en el layout raíz (`/ingresar` no la usa). `useSession()` (`use-session.ts`) devuelve `{ profile, memberships, active }`; tipos y `ROLE_LABELS` en `types.ts`. La membresía activa es la primera (el selector llega en M10-2). Un 401 de la API redirige a `/ingresar`.
-- Menú: `getNavItems(role)` y `navItems` en `src/config/navigation.ts` (una línea por ítem; cada módulo agrega las suyas, previo aviso a UX); `studentTabs` en `src/config/student-tabs.ts` (hoy tiene "Notas").
+- Menú: `getNavItems(role)` y `navItems` en `src/config/navigation.ts` (una línea por ítem; cada módulo agrega las suyas, previo aviso a UX); `studentTabs` en `src/config/student-tabs.ts` (hoy tiene "Notas" y "Asistencia").
 - Pantallas con sesión van dentro de `src/app/(panel)/` (header + menú por rol). `/` redirige a `/inicio`.
 
 ## Cómo se arman las pantallas (Next 16 con Cache Components)
@@ -78,57 +79,19 @@ Reglas del proyecto para cualquier asistente de código o integrante del equipo.
 - En rutas dinámicas (`[studentId]`) ni el layout ni la página leen `params` en el servidor: el componente cliente usa `useParams()`. El build lo marca `◐` (prerenderizado parcial).
 - Los datos se piden con `apiFetch` dentro de un `useEffect` con `.then/.catch` y una bandera `cancelled`. No se llama a `setState` de forma síncrona dentro de un efecto (lo marca el lint): el "cargando" se deriva comparando una clave (por ejemplo `subjectId:periodId`) con la del último resultado.
 - Todo componente de datos maneja los estados cargando (`SkeletonLines`), vacío (`EmptyState`), error con "Reintentar" (`ErrorState`) y éxito (toast).
-- Componentes compartidos en `src/components/ui/`: `toast.tsx` (`ToastProvider` en el layout raíz y `useToast`), `confirm-dialog.tsx`, `skeleton.tsx`, `empty-state.tsx`, `error-state.tsx`.
-- Para un cambio de pantalla con datos sin guardar se usa `useUnsavedChangesGuard` (`src/features/grades/use-unsaved-changes-guard.ts`) con `ConfirmDialog` ("Seguir editando" / "Salir sin guardar"). No puede frenar los botones atrás/adelante del navegador.
+- Componentes compartidos en `src/components/ui/`: `toast.tsx` (`ToastProvider` en el layout raíz y `useToast`), `confirm-dialog.tsx`, `skeleton.tsx`, `empty-state.tsx`, `error-state.tsx`, `save-bar.tsx` (barra de guardado de las planillas de notas y de asistencia).
+- Para un cambio de pantalla con datos sin guardar se usa `useUnsavedChangesGuard` (`src/lib/use-unsaved-changes-guard.ts`) con `ConfirmDialog` ("Seguir editando" / "Salir sin guardar"). No puede frenar los botones atrás/adelante del navegador.
 
 ## Calificaciones (M1)
 
-- Código en `src/features/grades/`. Back entrega **una nota por alumno, materia y período** (no hay 3 notas, promedio ni observaciones).
-- Endpoints: `GET /me/subjects`, `GET /grading-periods`, `GET /grades?subjectId=&periodId=` (alumnos ya ordenados por apellido; `value` puede ser `null`), `PUT /grades` (`{ subjectId, periodId, entries: [{ studentId, value }] }` → `{ saved }`; ignora los `null`, no borra notas; `saved: 0` si no hubo cambios), `GET /students/:studentId/grades` (tutor).
+- Código en `src/features/grades/`. Back entrega **una nota por alumno, materia y período** (no hay 3 notas ni promedio) y una **observación opcional** del docente por nota (`observations`, hasta 500 caracteres).
+- Endpoints: `GET /me/subjects`, `GET /grading-periods`, `GET /grades?subjectId=&periodId=` (alumnos ya ordenados por apellido; `value` y `observations` pueden ser `null`), `PUT /grades` (`{ subjectId, periodId, entries: [{ studentId, value, observations? }] }` → `{ saved }`; ignora los `null`, no borra notas; `saved: 0` si no hubo cambios), `GET /students/:studentId/grades` (tutor, también trae `observations`).
 - Escala 1 a 10, aprobación en 6 (supuesto de UX, a validar con la institución). Las reglas están en `grade-rules.ts`: validación (coma o punto, hasta 2 decimales), promedio con 1 decimal y semáforo (7 o más verde "Satisfactorio", 6 a 6,9 amarillo "Atención", menos de 6 rojo "Bajo", siempre con número y texto).
 - La lógica de edición (`grade-drafts.ts`) y el resumen del tutor (`student-grades.ts`) son funciones puras con tests.
 - Planilla del docente: `/calificaciones` (solo `teacher`). Portal del tutor: `/hijos` (lista) y `/hijos/[studentId]/notas` (solo `guardian`).
-
-## Tests
-
-- Vitest incluye `src/**/*.test.{ts,tsx}`. No hay `jsdom` ni `@testing-library`: los componentes se prueban con `renderToStaticMarkup` (de `react-dom/server`), por eso conviene separar la parte que solo dibuja (props) de la que pide datos.
-- `vitest.config.ts` no define el alias `@/`: en los tests se importa con rutas relativas y se evita importar módulos que traigan `@/lib/api` (usar `import type`).
-
-## Flujo de trabajo
-
-- Una tarea = un PR, siempre hacia `main`. Se mergea solo con CI en verde (lint, test, build y e2e) y aprobación de otro integrante.
-- Las ramas se crean desde `origin/main` (`git switch -c <rama> origin/main`) y se suben con `git push -u origin <rama>`.
-- Antes de cada commit: `git status -s` y confirmar que no hay archivos `.env*` ni de otra tarea.
-- No crear ramas ni subir cambios sin acuerdo del grupo.
-  PARTE 1 – M2 (va en la rama del PR de M2)
-  1A. REEMPLAZA un renglón: pestañas del hijo
-
-En la sección "Contratos con la API", en el renglón que empieza con - Menú: getNavItems(role)…, cambiá el final:
-
-Dice:
-
-`studentTabs` en `src/config/student-tabs.ts` (hoy tiene "Notas").
-
-Tiene que decir:
-
-`studentTabs` en `src/config/student-tabs.ts` (hoy tiene "Notas" y "Asistencia").
-1B. REEMPLAZA un renglón: componentes compartidos
-
-En la sección "Cómo se arman las pantallas", en el renglón que empieza con - Componentes compartidos en src/components/ui/…, dice:
-
-`toast.tsx` (`ToastProvider` en el layout raíz y `useToast`), `confirm-dialog.tsx`, `skeleton.tsx`, `empty-state.tsx`, `error-state.tsx`.
-
-Tiene que decir (se suma save-bar.tsx):
-
-`toast.tsx` (`ToastProvider` en el layout raíz y `useToast`), `confirm-dialog.tsx`, `skeleton.tsx`, `empty-state.tsx`, `error-state.tsx`, `save-bar.tsx` (barra de guardado de las planillas de notas y de asistencia).
-1C. REEMPLAZA un renglón: dónde vive el guard
-
-En la misma sección, el renglón que empieza con - Para un cambio de pantalla con datos sin guardar… dice que el guard está en src/features/grades/use-unsaved-changes-guard.ts. Ese archivo ya no existe (en M2 pasó a lib/). Tiene que decir:
-
-- Para un cambio de pantalla con datos sin guardar se usa `useUnsavedChangesGuard` (`src/lib/use-unsaved-changes-guard.ts`) con `ConfirmDialog` ("Seguir editando" / "Salir sin guardar"). No puede frenar los botones atrás/adelante del navegador.
-  1D. AGREGA una sección nueva
-
-Pegala justo después de la sección "Calificaciones (M1)" y antes de "Tests":
+- Observaciones (`observation-input.tsx`, `grade-drafts.ts`): `observations` omitida conserva la anterior, `""` la borra y más de 500 caracteres da 400 (el Front no corta lo que se escribe: avisa con `role="alert"` y bloquea "Guardar"). Los espacios de los costados no cuentan como cambio y se recortan al enviar. Se mandan **solo en los alumnos que el docente tocó**.
+- Si solo cambió la observación, el Front manda igual la nota que ya tenía: con `value: null` Back la dejaría en blanco. Un alumno sin nota puede tener observación (`value: null`).
+- Pendiente de Back: guardar solo una observación hoy avisa "Nueva nota" a los tutores (emite `grades.saved` por cualquier cambio). Pendiente de UX: diseño del campo y del texto de la observación.
 
 ## Asistencia (M2)
 
@@ -139,20 +102,6 @@ Pegala justo después de la sección "Calificaciones (M1)" y antes de "Tests":
 - Al guardar, el Front manda **solo los alumnos que cambió**: cada guardado vuelve a avisar a los tutores de los ausentes enviados, así que mandar toda la lista re-notificaría de más.
 - Las reglas (`attendance-rules.ts`, `attendance-api.ts`, `student-attendance.ts`) son funciones puras con tests. Las pantallas son `attendance-sheet.tsx` y `attendance-student-row.tsx`, y para el tutor `student-attendance-screen.tsx` y `student-attendance-view.tsx`.
 - Pantalla del docente y directivos: `/asistencia` (`teacher`, `admin`, `director`). Pestaña del tutor: `/hijos/[studentId]/asistencia` (solo `guardian`).
-  PARTE 2 – M3 (va en la rama del PR de M3)
-  2A. AGREGA un renglón en "Idioma"
-
-Pegalo como último renglón de la sección "Idioma":
-
-- Carpetas y archivos en minúscula (`announcements`, no `Announcements`). Windows no distingue mayúsculas, pero Linux (CI y Vercel) sí: una carpeta con otra mayúscula pasa en local y rompe el build allá.
-  2B. AGREGA un renglón en "Tests"
-
-Pegalo como último renglón de la sección "Tests":
-
-- Un componente que se prueba con `renderToStaticMarkup` no puede importar con `@/` (ni de forma indirecta). Por eso los componentes de dibujo (`announcement-card.tsx`, `announcement-form-fields.tsx`) solo importan con rutas relativas, y los que usan `@/` (`announcements-screen.tsx`, `announcement-form.tsx`, los hooks) no llevan test.
-  2C. AGREGA una sección nueva
-
-Pegala justo después de la sección "Tests" y antes de "Flujo de trabajo":
 
 ## Comunicados (M3)
 
@@ -167,22 +116,23 @@ Pegala justo después de la sección "Tests" y antes de "Flujo de trabajo":
 - El texto del comunicado se muestra siempre como **texto** (React lo escapa; `whitespace-pre-line` respeta los saltos de línea). Nunca `dangerouslySetInnerHTML`. La fecha se muestra en hora de Argentina (`formatDate`).
 - Zona provisoria de UX: todos los textos y colores de comunicados que UX todavía no confirmó están en `announcements-ui.ts`. Cuando UX los defina se cambian solo ahí.
 - Archivos: `types.ts` (tipos), `announcements-rules.ts` (reglas puras), `announcements-api.ts` (rutas, textos de error y conversión de las respuestas), `use-announcements.ts`, `use-announcement-courses.ts` y `use-publish-announcement.ts` (datos), `announcement-card.tsx` (tarjeta), `announcement-form-state.ts` y `announcement-form-fields.tsx` (formulario puro), `announcement-form.tsx` (formulario con estado) y `announcements-screen.tsx` (pantalla).
-- Pendiente: avisar al salir con texto sin publicar al tocar enlaces del menú (hoy solo avisa el botón Cancelar y el cierre de pestaña; se puede usar `useUnsavedChangesGuard`). Pendientes de UX: nombres de los alcances, etiqueta del menú, diseño del formulario, categorías y colores. Pendientes de Back: límites de largo y CORS para `localhost:3001`.
+- Pendiente: avisar al salir con texto sin publicar al tocar enlaces del menú (hoy solo avisa el botón Cancelar y el cierre de pestaña; se puede usar `useUnsavedChangesGuard`). Pendientes de UX: nombres de los alcances, etiqueta del menú, diseño del formulario, categorías y colores. Pendientes de Back: límites de largo.
 
 ## Notificaciones (M4)
 
 - Código en `src/features/notifications/`. Bandeja `/notificaciones` (todos los roles) y campanita en el header (`AppHeader`) con el número de no leídas. No hay ítem en el menú: se entra por la campanita.
-- Endpoints: `GET /notifications` (las 50 más nuevas: `{ id, title, body, readAt, createdAt }`, con `readAt: null` si no se leyó), `GET /notifications/unread-count` (`{ count }`), `POST /notifications/:id/read` (`{ success: true }`) y `POST /notifications/read-all` (`{ updated }`).
+- Endpoints: `GET /notifications` (las 50 más nuevas: `{ id, title, body, type, link, studentId, readAt, createdAt }`, con `readAt: null` si no se leyó), `GET /notifications/unread-count` (`{ count }`), `POST /notifications/:id/read` (`{ success: true }`) y `POST /notifications/read-all` (`{ updated }`) y `DELETE /notifications/:id` (204; 404 si no existe o no es del usuario).
 - Quién recibe (lo decide Back): solo los tutores, ante "Nueva nota", "Inasistencia registrada" y "Nuevo comunicado". Admin, director y docente ven la bandeja vacía y el contador en 0.
-- Back no manda `type`, `href`, categoría ni alumno. El destino al tocar una notificación se deduce del título (`DESTINATION_BY_TITLE` en `notifications-ui.ts`): comunicado → `/comunicados`, nota e inasistencia → `/hijos`, otro título → `/notificaciones`. Si Back cambia los títulos, hay que cambiarlos ahí.
+- Back manda `type` (`grade`, `attendance`, `announcement`, `general`), `link` y `studentId`. El destino al tocar se arma con `type` + `studentId` (`notificationHref` en `notifications-rules.ts`): nota → `/hijos/<id>/notas`, inasistencia → `/hijos/<id>/asistencia`, comunicado → `/comunicados`; sin alumno, `/hijos`. **`link` no se usa**: Back manda `/calificaciones` y `/asistencia`, que son pantallas del docente. Las notificaciones anteriores a la migración de Back vienen como `general`: para esas se usa `DESTINATION_BY_TITLE` (por título) y, si no coincide, `/notificaciones`.
 - Contador: `NotificationsProvider` vive en `src/app/(panel)/layout.tsx`, dentro de `SessionProvider` (necesita la institución activa). Pide el contador al entrar y en cada cambio de pantalla; si falla, se queda con el último valor y no muestra error. `useUnreadCount()` lo comparten la campanita y la bandeja.
 - Marcar leída (una, todas o al tocar la tarjeta): la pantalla y el contador cambian al instante, vuelven atrás si Back falla y después se pide el contador real. Un segundo toque mientras el primero está en curso se ignora.
 - El número de la campanita llega hasta `99+`, pero el nombre accesible dice la cantidad real ("Notificaciones, 120 sin leer"). La no leída se marca con punto, fondo y el texto "No leído", nunca solo con color.
 - Agrupación Hoy / Ayer / fecha y "Hace X minutos" con la hora de Argentina. Título y texto se muestran siempre como texto, nunca con `dangerouslySetInnerHTML`.
+- Eliminar (botón "Eliminar" en cada tarjeta, `use-delete-notification.ts`): pide confirmación con `ConfirmDialog`, saca la notificación de la pantalla y del contador (si estaba sin leer) al instante y la vuelve a poner si Back falla. Con 404 (ya no existe) queda eliminada. Un segundo toque mientras el primero está en curso se ignora. Cada eliminación es definitiva: no hay deshacer.
 - La campanita es un SVG propio (`bell-icon.tsx`): el proyecto no usa librería de íconos.
 - Zona provisoria de UX: textos, colores, destinos y la campanita están en `notifications-ui.ts`. Cuando UX los defina se cambian solo ahí.
-- Archivos: `types.ts`, `notifications-rules.ts` (reglas puras), `notifications-api.ts` (rutas, textos de error y conversión de las respuestas), `use-unread-count.ts` y `notifications-provider.tsx` (contador), `use-notifications.ts` y `use-mark-notifications.ts` (datos), `notification-card.tsx`, `notifications-list.tsx` y `notification-bell-link.tsx` (dibujo, con tests), `notification-bell.tsx` y `notifications-screen.tsx` (con datos).
-- Pendientes de Back: `type` o `href` para no depender del título, paginación (hoy solo llegan 50) y CORS para `localhost:3001`. Pendientes de UX: lugar y diseño de la campanita, colores de no leído, destinos, si va un ítem en el menú y el nombre de la escuela, que en 390 px se corta más con la campanita.
+- Archivos: `types.ts`, `notifications-rules.ts` (reglas puras), `notifications-api.ts` (rutas, textos de error y conversión de las respuestas), `use-unread-count.ts` y `notifications-provider.tsx` (contador), `use-notifications.ts`, `use-mark-notifications.ts` y `use-delete-notification.ts` (datos), `notification-card.tsx`, `notifications-list.tsx` y `notification-bell-link.tsx` (dibujo, con tests), `notification-bell.tsx` y `notifications-screen.tsx` (con datos).
+- Pendientes de Back: paginación (hoy solo llegan 50). Pendientes de UX: lugar y diseño de la campanita, colores de no leído, destinos, si va un ítem en el menú y el nombre de la escuela, que en 390 px se corta más con la campanita.
 
 ## Tablero de dirección (M5)
 
@@ -194,3 +144,16 @@ Pegala justo después de la sección "Tests" y antes de "Flujo de trabajo":
 - Alcance: solo lo que manda Back. Del PDF de M5-UX quedan afuera, hasta que Back los tenga: variación contra el período anterior y sparklines, selector de período, comunicados enviados, materias con riesgo, inasistencias acumuladas, gráficos de tendencia, distribución de notas, alertas, actividad reciente, acciones rápidas, reporte PDF y actualización automática. El PDF propone `GET /api/direccion/...`, que no existe.
 - Zona provisoria de UX: textos y colores en `dashboard-ui.ts`. Cuando UX los defina se cambian solo ahí.
 - Archivos: `types.ts`, `dashboard-api.ts` (ruta, textos de error y conversión de la respuesta), `dashboard-rules.ts` (reglas puras), `use-dashboard.ts` (datos), `kpi-card.tsx`, `dashboard-kpis.tsx`, `low-attendance-list.tsx`, `grade-averages-table.tsx` y `dashboard-view.tsx` (dibujo, con tests), `dashboard-screen.tsx` (con datos).
+
+## Tests
+
+- Vitest incluye `src/**/*.test.{ts,tsx}`. No hay `jsdom` ni `@testing-library`: los componentes se prueban con `renderToStaticMarkup` (de `react-dom/server`), por eso conviene separar la parte que solo dibuja (props) de la que pide datos.
+- `vitest.config.ts` no define el alias `@/`: en los tests se importa con rutas relativas y se evita importar módulos que traigan `@/lib/api` (usar `import type`).
+- Un componente que se prueba con `renderToStaticMarkup` no puede importar con `@/` (ni de forma indirecta). Por eso los componentes de dibujo (`announcement-card.tsx`, `announcement-form-fields.tsx`) solo importan con rutas relativas, y los que usan `@/` (`announcements-screen.tsx`, `announcement-form.tsx`, los hooks) no llevan test.
+
+## Flujo de trabajo
+
+- Una tarea = un PR, siempre hacia `main`. Se mergea solo con CI en verde (lint, test, build y e2e) y aprobación de otro integrante.
+- Las ramas se crean desde `origin/main` (`git switch -c <rama> origin/main`) y se suben con `git push -u origin <rama>`.
+- Antes de cada commit: `git status -s` y confirmar que no hay archivos `.env*` ni de otra tarea.
+- No crear ramas ni subir cambios sin acuerdo del grupo.

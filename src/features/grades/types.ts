@@ -32,16 +32,22 @@ export type StudentRef = {
 
 // GET /grades?subjectId=...&periodId=...: una fila por alumno del curso.
 // value es null cuando todavía no tiene nota.
+// observations: texto del docente o null. Puede faltar si Back es anterior a ese campo.
 export type GradeRow = {
     student: StudentRef;
     value: number | null;
+    observations?: string | null;
 };
 
 // PUT /grades: lo que se envía. Solo se mandan las notas con valor:
 // Back ignora los null (no borra notas).
+// value: la nota vigente. Si solo cambió la observación se manda igual la nota actual
+// (con null Back la borraría). observations solo se manda si el docente la tocó:
+// omitida conserva la anterior; "" la borra; máximo 500 caracteres.
 export type SaveGradesEntry = {
     studentId: string;
-    value: number;
+    value: number | null;
+    observations?: string;
 };
 
 export type SaveGradesBody = {
@@ -70,4 +76,6 @@ export type StudentGrade = {
     subject: { id: string; name: string };
     period: { id: string; name: string };
     value: number | null;
+    // Observación del docente (null si no tiene). Puede faltar si Back es anterior a ese campo.
+    observations?: string | null;
 };

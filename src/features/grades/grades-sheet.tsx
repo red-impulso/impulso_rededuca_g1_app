@@ -9,8 +9,14 @@ import { SaveBar } from "@/components/ui/save-bar";
 import { SkeletonLines } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast";
 import { useUnsavedChangesGuard } from "@/lib/use-unsaved-changes-guard";
-import { getRowState, setDraft, summarizeDrafts } from "./grade-drafts";
-import type { GradeDrafts } from "./grade-drafts";
+import {
+    getObservationState,
+    getRowState,
+    setDraft,
+    setObservationDraft,
+    summarizeDrafts,
+} from "./grade-drafts";
+import type { GradeDrafts, ObservationDrafts } from "./grade-drafts";
 import { GradeStudentCard } from "./grade-student-card";
 import { GradeStudentRow } from "./grade-student-row";
 import type { CourseRef, GradeRow } from "./types";
@@ -67,19 +73,31 @@ export function GradesSheet() {
     // Lo que el docente escribió y todavía no guardó
     const [drafts, setDrafts] = useState<GradeDrafts>({});
     // Notas ya guardadas en esta sesión: se muestran sin volver a pedirlas a Back
-    const [savedValues, setSavedValues] = useState<Record<string, number>>({});
+    const [savedValues, setSavedValues] = useState<Record<string, number | null>>({});
+    // Observaciones: lo escrito sin guardar y lo ya guardado en esta sesión
+    const [observationDrafts, setObservationDrafts] = useState<ObservationDrafts>({});
+    const [savedObservations, setSavedObservations] = useState<Record<string, string>>({});
     const [query, setQuery] = useState("");
     const [descending, setDescending] = useState(false);
 
     const serverRows = sheet.status === "ready" ? sheet.rows : NO_ROWS;
     const rows = useMemo(() => {
-        if (Object.keys(savedValues).length === 0) return serverRows;
-        return serverRows.map((row) =>
-            row.student.id in savedValues ? { ...row, value: savedValues[row.student.id] } : row,
-        );
-    }, [serverRows, savedValues]);
+        if (Object.keys(savedValues).length === 0 && Object.keys(savedObservations).length === 0) {
+            return serverRows;
+        }
+        return serverRows.map((row) => {
+            const id = row.student.id;
+            let next = row;
+            if (id in savedValues) next = { ...next, value: savedValues[id] };
+            if (id in savedObservations) next = { ...next, observations: savedObservations[id] };
+            return next;
+        });
+    }, [serverRows, savedValues, savedObservations]);
 
-    const summary = useMemo(() => summarizeDrafts(rows, drafts), [rows, drafts]);
+    const summary = useMemo(
+        () => summarizeDrafts(rows, drafts, observationDrafts),
+        [rows, drafts, observationDrafts],
+    );
     const saving = saveState.status === "saving";
 
     // Aviso antes de perder cambios: al tocar un enlace, cambiar de materia o período
@@ -126,7 +144,9 @@ export function GradesSheet() {
     // Al cambiar de materia o período las notas escritas ya no corresponden
     function handleSubjectChange(subjectId: string) {
         setDrafts({});
+        setObservationDrafts({});
         setSavedValues({});
+        setSavedObservations({});
         setQuery("");
         resetSave();
         selectSubject(subjectId);
@@ -134,7 +154,9 @@ export function GradesSheet() {
 
     function handlePeriodChange(periodId: string) {
         setDrafts({});
+        setObservationDrafts({});
         setSavedValues({});
+        setSavedObservations({});
         resetSave();
         selectPeriod(periodId);
     }
@@ -145,8 +167,14 @@ export function GradesSheet() {
         if (saveState.status !== "idle") resetSave();
     }
 
+    function handleObservationChange(row: GradeRow, text: string) {
+        setObservationDrafts((current) => setObservationDraft(current, row, text));
+        if (saveState.status !== "idle") resetSave();
+    }
+
     function handleCancel() {
         setDrafts({});
+        setObservationDrafts({});
         resetSave();
     }
 
@@ -163,7 +191,16 @@ export function GradesSheet() {
             ...current,
             ...Object.fromEntries(summary.entries.map((entry) => [entry.studentId, entry.value])),
         }));
+        setSavedObservations((current) => ({
+            ...current,
+            ...Object.fromEntries(
+                summary.entries
+                    .filter((entry) => entry.observations !== undefined)
+                    .map((entry) => [entry.studentId, entry.observations as string]),
+            ),
+        }));
         setDrafts({});
+        setObservationDrafts({});
         showToast(result.saved === 0 ? NOTHING_TO_SAVE_MESSAGE : SAVED_MESSAGE);
     }
 
@@ -227,6 +264,8 @@ export function GradesSheet() {
                             row={row}
                             state={getRowState(row, drafts)}
                             onChange={(text) => handleChange(row, text)}
+                            observation={getObservationState(row, observationDrafts)}
+                            onObservationChange={(text) => handleObservationChange(row, text)}
                             disabled={saving}
                         />
                     ))}
@@ -246,6 +285,9 @@ export function GradesSheet() {
                                 <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-muted">
                                     Resultado
                                 </th>
+                                <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-muted">
+                                    Observaciones
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
@@ -255,6 +297,8 @@ export function GradesSheet() {
                                     row={row}
                                     state={getRowState(row, drafts)}
                                     onChange={(text) => handleChange(row, text)}
+                                    observation={getObservationState(row, observationDrafts)}
+                                    onObservationChange={(text) => handleObservationChange(row, text)}
                                     disabled={saving}
                                 />
                             ))}
@@ -331,7 +375,7 @@ export function GradesSheet() {
                 <SaveBar
                     changedCount={summary.changedCount}
                     hasErrors={summary.hasErrors}
-                    errorsText="Corrige las notas marcadas en rojo para poder guardar."
+                    errorsText="Corrige lo marcado en rojo para poder guardar."
                     saveState={saveState}
                     onCancel={handleCancel}
                     onSave={handleSave}

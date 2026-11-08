@@ -57,3 +57,30 @@ describe("StudentGradesView", () => {
         expect(html).toContain("Sin notas");
     });
 });
+
+describe("observaciones en el detalle", () => {
+    function renderWith(observations: string | null) {
+        const subjects = groupGradesBySubject([
+            { ...grade("Lengua", "1.er trimestre", 7), observations },
+        ]);
+        return renderToStaticMarkup(
+            <StudentGradesView subjects={subjects} summary={summarizeStudent(subjects)} />,
+        );
+    }
+
+    it("muestra la observación con el nombre del período", () => {
+        const html = renderWith("Participa mucho");
+        expect(html).toContain("Observación (1.er trimestre): ");
+        expect(html).toContain("Participa mucho");
+    });
+
+    it("sin observación no muestra nada", () => {
+        expect(renderWith(null)).not.toContain("Observación");
+    });
+
+    it("el texto se escapa: nunca se interpreta como HTML", () => {
+        const html = renderWith("<b>hola</b>");
+        expect(html).toContain("&lt;b&gt;hola&lt;/b&gt;");
+        expect(html).not.toContain("<b>hola</b>");
+    });
+});
