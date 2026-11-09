@@ -46,4 +46,11 @@ describe("getNavItems", () => {
         expect(getNavItems("teacher").map((item) => item.href)).not.toContain("/tablero");
         expect(getNavItems("guardian").map((item) => item.href)).not.toContain("/tablero");
     });
+
+    it("solo admin ve Interesados, que lleva a /interesados", () => {
+        expect(getNavItems("admin").map((item) => item.href)).toContain("/interesados");
+        expect(getNavItems("teacher").map((item) => item.label)).not.toContain("Interesados");
+        expect(getNavItems("director").map((item) => item.label)).not.toContain("Interesados");
+        expect(getNavItems("guardian").map((item) => item.label)).not.toContain("Interesados");
+    });
 });
