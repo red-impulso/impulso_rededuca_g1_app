@@ -12,6 +12,7 @@ export const navItems: NavItem[] = [
     { label: "Inicio", href: "/inicio", roles: ["admin", "director", "teacher", "guardian"] },
     { label: "Tablero", href: "/tablero", roles: ["admin", "director"] },
     { label: "Usuarios", href: "/usuarios", roles: ["admin"] },
+    { label: "Interesados", href: "/interesados", roles: ["admin"] },
     { label: "Cursos", href: "/cursos", roles: ["director"] },
     { label: "Mis cursos", href: "/mis-cursos", roles: ["teacher"] },
     { label: "Mis hijos", href: "/hijos", roles: ["guardian"] },
