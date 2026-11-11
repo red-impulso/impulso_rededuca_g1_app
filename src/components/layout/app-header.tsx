@@ -7,6 +7,7 @@ import { LogoMark, Wordmark } from "@/components/brand/logo";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { getNavItems } from "@/config/navigation";
 import { NotificationBell } from "@/features/notifications/notification-bell";
+import { SchoolSelector } from "@/features/session/school-selector";
 import { useSession } from "@/features/session/use-session";
 import { setActiveInstitutionId } from "@/lib/api";
 import { signOut } from "@/lib/supabase/sign-out";
@@ -39,7 +40,7 @@ export function AppHeader() {
           <LogoMark size={36} />
           <div className="min-w-0 leading-tight">
             <Wordmark tone="light" className="block" />
-            <p className="truncate text-xs text-muted">{active.institutionName}</p>
+            <SchoolSelector />
           </div>
         </div>
 

@@ -53,4 +53,23 @@ describe("getNavItems", () => {
         expect(getNavItems("director").map((item) => item.label)).not.toContain("Interesados");
         expect(getNavItems("guardian").map((item) => item.label)).not.toContain("Interesados");
     });
+
+    it("admin y director ven Escuela, Alumnos, Docentes, Cursos y Materias, en el orden del SDD", () => {
+        for (const role of ["admin", "director"] as const) {
+            const labels = getNavItems(role).map((item) => item.label);
+            const m6 = labels.filter((label) => ["Escuela", "Alumnos", "Docentes", "Cursos", "Materias"].includes(label));
+            expect(m6).toEqual(["Escuela", "Alumnos", "Docentes", "Cursos", "Materias"]);
+        }
+        for (const role of ["teacher", "guardian"] as const) {
+            const hrefs = getNavItems(role).map((item) => item.href);
+            for (const href of ["/escuela", "/alumnos", "/docentes", "/cursos", "/materias", "/usuarios"]) {
+                expect(hrefs).not.toContain(href);
+            }
+        }
+    });
+
+    it("solo admin ve Usuarios", () => {
+        expect(getNavItems("admin").map((item) => item.href)).toContain("/usuarios");
+        expect(getNavItems("director").map((item) => item.href)).not.toContain("/usuarios");
+    });
 });
