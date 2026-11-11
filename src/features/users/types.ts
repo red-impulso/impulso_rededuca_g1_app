@@ -15,6 +15,7 @@ export type UserRow = {
     phone: string | null;
     email: string | null;
     lastAccess: string | null;
+    blockedReason: string | null;
     createdAt: string | null;
 };
 

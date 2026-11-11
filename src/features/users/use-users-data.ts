@@ -40,7 +40,7 @@ export function useUserCounts() {
     });
 }
 
-// Alta: POST /users (existe). Edición de datos: PATCH /users/:id (pedido a Back)
+// Alta: POST /users. Edición de datos: PATCH /users/:id
 export function useSaveUser() {
     const invalidate = useInvalidate();
     return useMutation({
@@ -53,7 +53,7 @@ export function useSaveUser() {
     });
 }
 
-// PATCH /memberships/:id { role } (existe)
+// PATCH /memberships/:id { role }
 export function useChangeRole() {
     const invalidate = useInvalidate();
     return useMutation({

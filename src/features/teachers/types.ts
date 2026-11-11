@@ -66,7 +66,7 @@ export type TeacherFilters = {
 
 export type Availability = "available" | "conflict" | "over-limit" | "unavailable";
 
-// Candidato para asignar: GET /teachers/candidates (pedido a Back) o, mientras falte, armado con GET /teachers
+// Candidato para asignar: GET /teachers/candidates
 export type TeacherCandidate = {
     id: string;
     fullName: string;

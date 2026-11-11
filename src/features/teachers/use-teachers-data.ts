@@ -17,11 +17,12 @@ import {
     parseTeacherPage,
     teacherActivityPath,
     teacherPath,
+    TEACHERS_PATH,
     teachersExportPath,
     teachersListPath,
 } from "./teachers-api";
 import type { PendingChanges } from "./teachers-rules";
-import { toTeacherPatch, toTeacherUser } from "./teachers-schemas";
+import { toTeacherCreate, toTeacherPatch } from "./teachers-schemas";
 import type { TeacherFormValues } from "./teachers-schemas";
 import type { TeacherFilters, TeacherStatus } from "./types";
 
@@ -100,18 +101,17 @@ export function useCandidates(courseId: string, subjectId: string | null) {
     });
 }
 
-// Alta: POST /users (rol docente) + PATCH /teachers/:id. Edición: PATCH /teachers/:id.
+// Alta: POST /teachers. Edición: PATCH /teachers/:id (también nombre, correo y teléfono).
 export function useSaveTeacher() {
     const invalidate = useInvalidate();
     return useMutation({
         mutationFn: async ({ id, values }: { id: string | null; values: TeacherFormValues }) => {
-            let teacherId = id;
-            if (!teacherId) {
-                const created = await apiFetch<{ membershipId?: unknown }>("/users", json("POST", toTeacherUser(values)));
-                teacherId = parsed(typeof created?.membershipId === "string" ? created.membershipId : null);
+            if (id) {
+                await apiFetch<unknown>(teacherPath(id), json("PATCH", { ...toTeacherPatch(values), fullName: values.fullName.trim(), email: values.email.trim(), phone: values.phone.trim() || null }));
+                return id;
             }
-            await apiFetch<unknown>(teacherPath(teacherId), json("PATCH", toTeacherPatch(values)));
-            return teacherId;
+            const created = await apiFetch<{ id?: unknown; membershipId?: unknown }>(TEACHERS_PATH, json("POST", toTeacherCreate(values)));
+            return parsed(typeof created?.id === "string" ? created.id : typeof created?.membershipId === "string" ? created.membershipId : null);
         },
         onSuccess: invalidate,
     });
@@ -150,7 +150,7 @@ export function useImportTeachers() {
     });
 }
 
-// Guarda todo junto: PUT /courses/:id/assignments (pedido a Back). Si no existe (404), usa PUT /subjects/:id/teacher por materia.
+// Guarda todo junto: PUT /courses/:id/assignments. Si responde 404, usa PUT /subjects/:id/teacher por materia.
 export function useSaveAssignments(courseId: string) {
     const invalidate = useInvalidate();
     return useMutation({

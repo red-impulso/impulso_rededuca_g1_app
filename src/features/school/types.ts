@@ -6,7 +6,7 @@ export type CourseShift = "morning" | "afternoon" | "evening";
 // Estado de cursos y materias (badge Activo / Inactivo / Borrador)
 export type RecordStatus = "active" | "inactive" | "draft";
 
-// GET /institution (pedido a Back) y PATCH /institution
+// GET /institution y PATCH /institution
 export type School = {
     id: string;
     name: string;
@@ -38,7 +38,7 @@ export type CourseRef = {
     schoolYear: number | null;
 };
 
-// GET /courses. classroom, status, studentsCount y homeroomTeacher: pedidos a Back
+// GET /courses. classroom, status, studentsCount y homeroomTeacher
 export type Course = CourseRef & {
     classroom: string | null;
     status: RecordStatus | null;
@@ -46,7 +46,7 @@ export type Course = CourseRef & {
     homeroomTeacher: PersonRef | null;
 };
 
-// GET /subjects. weeklyHours, description, status, studentsCount y updatedAt: pedidos a Back
+// GET /subjects. weeklyHours, description, status, studentsCount y updatedAt
 export type Subject = {
     id: string;
     name: string;

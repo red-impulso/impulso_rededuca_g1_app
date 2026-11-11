@@ -16,6 +16,13 @@ function SchoolLogo({ name }: { name: string }) {
     return <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-[#E8EEF9] text-xs font-semibold text-blue">{initials(name)}</span>;
 }
 
+const SCHOOL_STATUS_LABELS: Record<string, string> = { "en-implementacion": "⏳ En implementación", suspendida: "⚠ Suspendida" };
+
+// Ciudad y nivel de GET /me, si Back los manda
+export function schoolPlace(membership: Membership): string | null {
+    return [membership.city, membership.level].filter(Boolean).join(" · ") || null;
+}
+
 function SchoolCard({ membership, current, onChoose }: { membership: Membership; current: boolean; onChoose: () => void }) {
     return (
         <button
@@ -28,7 +35,9 @@ function SchoolCard({ membership, current, onChoose }: { membership: Membership;
             <SchoolLogo name={membership.institutionName} />
             <span className="min-w-0 flex-1">
                 <span className="block font-semibold break-words text-ink">{membership.institutionName}</span>
+                {schoolPlace(membership) && <span className="block text-sm text-muted">{schoolPlace(membership)}</span>}
                 <span className="block text-sm text-muted">Tu rol: {ROLE_LABELS[membership.role]}</span>
+                {membership.institutionStatus && membership.institutionStatus !== "activa" && <span className="block text-xs font-semibold text-warning">{SCHOOL_STATUS_LABELS[membership.institutionStatus] ?? membership.institutionStatus}</span>}
             </span>
             {current && <span className="shrink-0 text-xs font-semibold text-blue">✓ Escuela actual</span>}
         </button>

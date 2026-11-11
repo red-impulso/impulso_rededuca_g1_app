@@ -34,10 +34,9 @@ function TeacherForm({ teacher, onCancel, onSaved }: { teacher: TeacherDetail | 
         <form noValidate onSubmit={handleSubmit((values) => save.mutate({ id: teacher?.id ?? null, values }, { onSuccess: (id) => onSaved(id, !editing) }))} className="flex flex-col gap-4">
             {!editing && <p className="text-sm text-muted">{NEW_TEACHER_HELP_TEXT}</p>}
             <div className="grid gap-4 sm:grid-cols-2">
-                {/* Nombre, correo y teléfono vienen de la cuenta: Back todavía no permite editarlos (pedido) */}
-                <TextField id="docente-fullName" label={TEACHER_FIELD_LABELS.fullName} disabled={editing} error={errors.fullName?.message} {...register("fullName")} />
-                <TextField id="docente-email" type="email" label={TEACHER_FIELD_LABELS.email} disabled={editing} error={errors.email?.message} {...register("email")} />
-                <TextField id="docente-phone" type="tel" label={TEACHER_FIELD_LABELS.phone} disabled={editing} error={errors.phone?.message} {...register("phone")} />
+                <TextField id="docente-fullName" label={TEACHER_FIELD_LABELS.fullName} error={errors.fullName?.message} {...register("fullName")} />
+                <TextField id="docente-email" type="email" label={TEACHER_FIELD_LABELS.email} error={errors.email?.message} {...register("email")} />
+                <TextField id="docente-phone" type="tel" label={TEACHER_FIELD_LABELS.phone} error={errors.phone?.message} {...register("phone")} />
                 <TextField id="docente-fileNumber" label={TEACHER_FIELD_LABELS.fileNumber} placeholder="L-1042" error={errors.fileNumber?.message} {...register("fileNumber")} />
                 <SelectField id="docente-employment" label={TEACHER_FIELD_LABELS.employmentStatus} options={Object.entries(EMPLOYMENT_LABELS).map(([value, label]) => ({ value, label }))} error={errors.employmentStatus?.message} {...register("employmentStatus")} />
                 <SelectField id="docente-status" label={TEACHER_FIELD_LABELS.status} options={Object.entries(TEACHER_STATUS_LABELS).map(([value, label]) => ({ value, label }))} error={errors.status?.message} {...register("status")} />

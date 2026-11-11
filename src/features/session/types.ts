@@ -12,6 +12,9 @@ export type Membership = {
     institutionId: string;
     institutionName: string;
     role: Role;
+    institutionStatus?: string | null;
+    city?: string | null;
+    level?: string | null;
 };
 
 // Respuesta de GET /me

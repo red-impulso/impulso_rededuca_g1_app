@@ -18,9 +18,9 @@ import type {
 export const TEACHERS_PATH = "/teachers";
 export const TEACHERS_PAGE_SIZE = 25;
 export const DEFAULT_MAX_HOURS = 30;
-const SORT_PARAM = { name: "lastName", "file-number": "fileNumber", hours: "-weeklyHours" } as const;
+const SORT_PARAM = { name: "name", "file-number": "fileNumber", hours: "-weeklyHours" } as const;
 
-// q, status, employmentStatus, courseId, subjectId, page y limit ya existen; shift y sort están pedidos a Back
+// q, status, employmentStatus, courseId, subjectId, page y limit ya existen
 export function teachersListPath(filters: TeacherFilters): string {
     const params = new URLSearchParams();
     if (filters.q.trim()) params.set("q", filters.q.trim());
@@ -141,10 +141,14 @@ export function parseTeacherCounts(data: unknown): Record<"all" | TeacherStatus,
     return { all, activo: num(data.activo) ?? 0, licencia: num(data.licencia) ?? 0, inactivo: num(data.inactivo) ?? 0 };
 }
 
+const NON_SCHEDULE_CONFLICTS = ["El docente está inactivo", "El docente está de licencia", "Supera el límite de horas semanales"];
+
 function parseCandidate(value: unknown): TeacherCandidate | null {
     const summary = parseTeacherSummary(value);
     if (!summary || !isRecord(value)) return null;
-    const conflict = isRecord(value.conflict) ? [text(value.conflict.subject), text(value.conflict.course), text(value.conflict.when)].filter(Boolean).join(" · ") : null;
+    // Back manda en `conflict` también estado y límite: esos los calcula el Front, acá solo queda el choque de horario
+    const raw = typeof value.conflict === "string" ? value.conflict : isRecord(value.conflict) ? [text(value.conflict.subject), text(value.conflict.course), text(value.conflict.when)].filter(Boolean).join(" · ") : null;
+    const conflict = raw && !NON_SCHEDULE_CONFLICTS.includes(raw) ? raw : null;
     return { id: summary.id, fullName: summary.fullName, status: summary.status, weeklyHours: summary.weeklyHours, maxWeeklyHours: summary.maxWeeklyHours, conflict: conflict || null };
 }
 

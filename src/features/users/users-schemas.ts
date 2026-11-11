@@ -44,7 +44,7 @@ export function toCreateUserBody(values: UserFormValues) {
     };
 }
 
-// PATCH /users/:id (pedido a Back): datos personales
+// PATCH /users/:id: datos personales
 export function toUpdateUserBody(values: UserFormValues) {
     const body = toCreateUserBody(values);
     return { fullName: body.fullName, firstName: body.firstName, lastName: body.lastName, email: body.email, dni: body.dni ?? null, phone: body.phone ?? null };

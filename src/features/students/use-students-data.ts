@@ -79,7 +79,7 @@ export function useDeleteStudent() {
     });
 }
 
-// GET /students/:id/report (pedido a Back) → { url } firmada del PDF del informe
+// GET /students/:id/report → { url } firmada del PDF del informe
 export function useStudentReport() {
     return useMutation({
         mutationFn: async (id: string) => {

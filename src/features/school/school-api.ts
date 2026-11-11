@@ -13,9 +13,9 @@ import type {
 
 // Rutas, conversión de respuestas y cuerpos de la API de M6. Funciones puras (sin React ni fetch).
 
-// GET /institution (pedido a Back) y PATCH /institution
+// GET /institution y PATCH /institution
 export const INSTITUTION_PATH = "/institution";
-// PUT /institution/logo, multipart con el campo "file" (pedido a Back)
+// PUT /institution/logo, multipart con el campo "file"
 export const INSTITUTION_LOGO_PATH = "/institution/logo";
 // GET y POST /courses
 export const COURSES_PATH = "/courses";
@@ -212,7 +212,7 @@ export function orNull(value: string): string | null {
     return trimmed ? trimmed : null;
 }
 
-// PATCH /institution. name, address y levels ya existen en Back; el resto está pedido.
+// PATCH /institution: todos los campos de la ficha.
 export function toSchoolBody(values: SchoolFormValues) {
     const schedule = orNull(values.schedule)?.replace(/\s*[–-]\s*/, " – ") ?? null;
     return {
@@ -233,7 +233,7 @@ export function toSchoolBody(values: SchoolFormValues) {
     };
 }
 
-// POST /courses y PATCH /courses/:id. classroom, homeroomTeacherMembershipId y status están pedidos a Back.
+// POST /courses y PATCH /courses/:id.
 // El nombre "5° Año A" se convierte en año y división (Back arma su propio nombre).
 export function toCourseBody(values: CourseFormValues) {
     const key = parseCourseName(values.name);
@@ -248,7 +248,7 @@ export function toCourseBody(values: CourseFormValues) {
     };
 }
 
-// POST /subjects y PATCH /subjects/:id. weeklyHours, description y status están pedidos a Back.
+// POST /subjects y PATCH /subjects/:id.
 export function toSubjectBody(values: SubjectFormValues) {
     return {
         courseId: values.courseId,

@@ -22,7 +22,7 @@ export type GuardianLink = {
     otherStudentsCount: number;
 };
 
-// Tutor existente de GET /users?role=guardian
+// Tutor existente de GET /guardians?q=
 export type GuardianCandidate = {
     membershipId: string;
     fullName: string;

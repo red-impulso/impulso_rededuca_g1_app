@@ -32,7 +32,7 @@ describe("guardians-api", () => {
     it("rutas", () => {
         expect(guardiansPath("s1", true)).toBe("/students/s1/guardians?includeInactive=true");
         expect(makePrimaryPath("s1", "g1")).toBe("/students/s1/guardians/g1/make-primary");
-        expect(guardianCandidatesPath(" ana ")).toBe("/users?role=guardian&status=active&limit=20&q=ana");
+        expect(guardianCandidatesPath(" ana ")).toBe("/guardians?limit=20&q=ana");
     });
 
     it("lee los vínculos de Back", () => {
