@@ -54,6 +54,7 @@ export function UserDetailPanel({ user, schoolName, onClose, onAction }: { user:
                         <div>
                             <p className="font-semibold">{user.fullName}</p>
                             <div className="mt-1 flex flex-wrap gap-2"><RoleBadge role={user.role} /><UserStatusBadge status={user.status} /></div>
+                            {user.status === "blocked" && user.blockedReason && <p className="mt-1 text-sm text-muted">Motivo del bloqueo: {user.blockedReason}</p>}
                         </div>
                     </div>
                     <section aria-label={DETAIL_SECTIONS.general}>

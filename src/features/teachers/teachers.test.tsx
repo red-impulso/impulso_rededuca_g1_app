@@ -2,7 +2,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { TeacherDetailView } from "./teacher-detail";
 import { TeachersList } from "./teachers-list";
-import { parseAssignmentRows, parseTeacherDetail, parseTeacherPage, teachersListPath } from "./teachers-api";
+import { parseAssignmentRows, parseCandidates, parseTeacherDetail, parseTeacherPage, teachersListPath } from "./teachers-api";
 import {
     DEFAULT_TEACHER_FILTERS,
     applyChanges,
@@ -123,5 +123,18 @@ describe("vistas M8", () => {
         expect(html).toContain("Todavía no hay horarios cargados.");
         expect(html).toContain("No pudimos cargar la actividad.");
         expect(html).toContain("mailto:laura@x.com");
+    });
+});
+
+describe("candidatos de GET /teachers/candidates", () => {
+    it("solo conserva como conflicto el choque de horario", () => {
+        const base = { fullName: "Ana Pérez", status: "activo", weeklyHours: 10, maxWeeklyHours: 30 };
+        const rows = parseCandidates([
+            { ...base, id: "a", conflict: "El docente está de licencia" },
+            { ...base, id: "b", conflict: "Supera el límite de horas semanales" },
+            { ...base, id: "c", conflict: "Química · 5° B · Lunes 8:00" },
+            { ...base, id: "d", conflict: null },
+        ]);
+        expect(rows?.map((row) => row.conflict)).toEqual([null, null, "Química · 5° B · Lunes 8:00", null]);
     });
 });

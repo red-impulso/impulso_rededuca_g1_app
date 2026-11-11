@@ -19,14 +19,14 @@ export function makePrimaryPath(studentId: string, guardianMembershipId: string)
     return `${guardianLinkPath(studentId, guardianMembershipId)}/make-primary`;
 }
 
-// GET /users?role=guardian existe solo para administración (pedido a Back abrirlo a dirección)
+// GET /guardians?q= busca tutores de la escuela por nombre o DNI (administración y dirección)
 export function guardianCandidatesPath(q: string): string {
-    const params = new URLSearchParams({ role: "guardian", status: "active", limit: "20" });
+    const params = new URLSearchParams({ limit: "20" });
     if (q.trim()) params.set("q", q.trim());
-    return `/users?${params.toString()}`;
+    return `/guardians?${params.toString()}`;
 }
 
-// Pedidos a Back: alta de la persona tutor y edición de sus datos
+// Alta de la persona tutor (reutiliza si ya existe por DNI o correo) y edición de sus datos
 export const GUARDIANS_PATH = "/guardians";
 export function guardianPersonPath(guardianMembershipId: string): string {
     return `${GUARDIANS_PATH}/${encodeURIComponent(guardianMembershipId)}`;
@@ -70,7 +70,7 @@ export function parseGuardianLinks(data: unknown): GuardianLink[] | null {
 
 function parseCandidate(value: unknown): GuardianCandidate | null {
     if (!isRecord(value) || typeof value.membershipId !== "string") return null;
-    const profile = isRecord(value.profile) ? value.profile : {};
+    const profile = isRecord(value.profile) ? value.profile : value;
     return { membershipId: value.membershipId, fullName: text(profile.fullName) ?? "", dni: text(profile.dni), email: text(value.email) };
 }
 
@@ -86,7 +86,7 @@ export function toLinkBody(values: GuardianFormValues) {
     };
 }
 
-// POST /guardians y PATCH /guardians/:id (pedidos a Back)
+// POST /guardians y PATCH /guardians/:membershipId
 export function toGuardianPersonBody(values: GuardianFormValues) {
     return {
         firstName: values.firstName.trim(),

@@ -15,7 +15,7 @@ export function normalizeQuery(q: string): string {
     return /^[\d.\s]+$/.test(trimmed) ? trimmed.replace(/[.\s]/g, "") : trimmed;
 }
 
-// q, role, status, page y limit existen; lastAccess está pedido a Back
+// Filtros: q, role, status, lastAccess, page y limit
 export function usersListPath(filters: UserFilters): string {
     const params = new URLSearchParams();
     const q = normalizeQuery(filters.q);
@@ -70,6 +70,7 @@ export function parseUserRow(value: unknown): UserRow | null {
         phone: text(profile.phone),
         email: text(value.email),
         lastAccess: text(value.lastAccess),
+        blockedReason: text(value.blockedReason),
         createdAt: text(value.createdAt),
     };
 }

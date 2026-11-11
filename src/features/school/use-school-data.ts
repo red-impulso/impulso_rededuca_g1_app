@@ -67,7 +67,7 @@ export function useInstitutionId(): string {
     return useSession().active.id;
 }
 
-// GET /institution (pedido a Back: hasta que exista, la pantalla muestra el error)
+// GET /institution
 export function useSchool() {
     const institutionId = useInstitutionId();
     return useQuery({
@@ -133,7 +133,7 @@ export function useSaveSchool() {
     });
 }
 
-// PUT /institution/logo con el archivo (pedido a Back)
+// PUT /institution/logo con el archivo
 export function useUploadLogo() {
     const institutionId = useInstitutionId();
     const queryClient = useQueryClient();
@@ -200,7 +200,7 @@ export function useSetSubjectTeacher() {
     });
 }
 
-// PATCH /subjects/:id { status: "inactive" } (estado de materia pedido a Back)
+// PATCH /subjects/:id { status: "inactive" }
 export function useDeactivateSubject() {
     const institutionId = useInstitutionId();
     const queryClient = useQueryClient();

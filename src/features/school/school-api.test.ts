@@ -95,7 +95,7 @@ describe("respuestas", () => {
         expect(parseCourses({})).toBeNull();
     });
 
-    it("cursos con los campos pedidos a Back", () => {
+    it("cursos con todos los campos de Back", () => {
         const [course] = parseCourses([
             { id: "c1", name: "5° A", classroom: "Aula 3", status: "draft", studentsCount: 32, homeroomTeacher: { id: "t1", fullName: "Marta Ruiz" } },
         ])!;

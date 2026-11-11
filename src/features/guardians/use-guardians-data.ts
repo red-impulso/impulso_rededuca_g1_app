@@ -56,7 +56,7 @@ type SaveInput =
     | { mode: "existing"; guardianMembershipId: string; values: GuardianFormValues; isPrimary: boolean }
     | { mode: "edit"; guardianMembershipId: string; values: GuardianFormValues; personChanged: boolean };
 
-// Alta: nuevo tutor → POST /guardians (pedido a Back) y luego el vínculo. Edición: vínculo y, si cambiaron, sus datos.
+// Alta: nuevo tutor → POST /guardians y luego el vínculo. Edición: vínculo y, si cambiaron, sus datos.
 export function useSaveGuardian(studentId: string) {
     const refresh = useRefresh(studentId);
     return useMutation({

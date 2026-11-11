@@ -151,26 +151,26 @@ Reglas del proyecto para cualquier asistente de código o integrante del equipo.
 - Datos con TanStack Query (`src/lib/query-provider.tsx`, en el layout del panel). Las claves llevan el id de la escuela activa (`useInstitutionId()`), así al cambiar de escuela no se mezclan datos.
 - Formularios con React Hook Form + Zod (`school-schemas.ts`); campos comunes en `src/components/ui/form-fields.tsx`; modales con Radix en `src/components/ui/modal.tsx` (hoja inferior en celular).
 - Filtros y búsqueda en la URL; búsqueda con espera de 300 ms. Textos literales del SDD en `school-texts.ts` (M6 usa tuteo).
-- Lo que Back no tiene (`GET /institution`, logo, `GET /courses/:id`, estado de materia…) se pide igual: la pantalla muestra "Esta función todavía no está disponible en el servidor." con Reintentar. Los campos que Back no manda se ven "—".
+- Contratos de M6 a M10 alineados con la rama de Back `feat/frontend-full-contract-alignment` (`GET/PATCH /institution`, `PUT /institution/logo`, `GET /courses/:id`, estado de cursos y materias, etc.). Si un endpoint responde 404, la pantalla muestra "Esta función todavía no está disponible en el servidor." con Reintentar.
 - "Asignar docente" abre un modal simple y ofrece "Abrir asignación completa" (`/docentes/asignacion?curso=&materia=`).
 
 ## Alumnos (M7) y tutores (M9)
 
 - Código en `src/features/students/` y `src/features/guardians/`. Pantallas `/alumnos` (filtros `q, curso, estado, turno, anio, orden, pagina` en la URL, 25 por página) y `/alumnos/[studentId]` (pestañas Ficha y Tutores).
-- Back: `GET /students`, `GET /students/:id/profile`, `POST/PATCH/DELETE /students`, `/students/:id/guardians` (+ `make-primary`). Pedidos: actividad, informe PDF, `POST /guardians` y `PATCH /guardians/:id`.
+- Back: `GET /students` (filtros `shift`, `schoolYear`, `sort`), `GET /students/:id/profile`, `POST/PATCH/DELETE /students`, `GET /students/:id/activity`, `GET /students/:id/report`, `/students/:id/guardians` (+ `make-primary`), `GET /guardians?q=` (buscar tutor), `POST /guardians` (reutiliza si ya existe por DNI o correo) y `PATCH /guardians/:membershipId`.
 - Tutores: un solo principal activo; desvincular conserva el historial; inactivos ocultos por defecto. `GuardianCard` vive en `guardian-card.tsx` con imports relativos para poder testearlo.
 
 ## Docentes (M8)
 
 - Código en `src/features/teachers/`. Pantallas `/docentes`, `/docentes/[id]` y `/docentes/asignacion` (M8 usa voseo).
-- Back: `GET /teachers`, `GET /teachers/:id`, `PATCH /teachers/:id`, `PUT /subjects/:id/teacher`, `GET /courses/:id/assignments`. Alta: `POST /users` con `role: teacher` y después `PATCH /teachers/:id`.
-- Reglas en `teachers-rules.ts`: máximo 30 hs (o `maxWeeklyHours`), inactivo no se asigna, licencia se asigna con aviso, sin choque de horario. Back todavía no las valida. El medidor de carga siempre lleva texto.
-- Asignación: los cambios se acumulan y se guardan juntos con `PUT /courses/:id/assignments` (pedido); si da 404 se usa `PUT /subjects/:id/teacher` por materia.
+- Back: `GET /teachers` (+ `counts`, `export`, `import`, `candidates`), `POST /teachers` (alta), `GET/PATCH /teachers/:id` (también nombre, correo y teléfono), `GET /teachers/:id/activity`, `PUT /courses/:id/assignments`, `PUT /subjects/:id/teacher`.
+- Reglas en `teachers-rules.ts`: máximo 30 hs (o `maxWeeklyHours`), inactivo no se asigna, licencia se asigna con aviso, sin choque de horario. Back también responde 409 por inactivo o límite. `conflict` de candidatos: el Front ignora los textos de estado y límite (los calcula él) y solo muestra el choque de horario.
+- Asignación: los cambios se acumulan y se guardan juntos con `PUT /courses/:id/assignments`; si da 404 se usa `PUT /subjects/:id/teacher` por materia.
 
 ## Usuarios y selector de escuela (M10)
 
 - Código en `src/features/users/` y `src/features/session/` (`institution-switch.ts`, `school-selector.tsx`). Pantalla `/usuarios`, solo admin (igual que Back).
-- Back: `GET /users`, `POST /users`, `PATCH /memberships/:id { role }`, `DELETE /memberships/:id` (baja lógica). Pedidos: contadores, editar datos, restablecer contraseña, reactivar, exportar, filtro de último acceso.
+- Back: `GET /users` (+ `counts`, `export`, filtro `lastAccess`), `POST /users`, `PATCH /users/:userId`, `POST /users/:userId/reset-password`, `PATCH /memberships/:id { role }`, `DELETE /memberships/:id` (baja lógica), `POST /memberships/:id/reactivate`. `blockedReason` se muestra en el detalle. `GET /me` trae `institutionStatus`, `city` y `level`, que se ven en el selector de escuela.
 - Selector de escuela en el header (solo si hay más de una membresía): verifica con `GET /me`, cambia `X-Institution-Id`, vacía la caché de TanStack Query y recuerda la escuela en `localStorage` (`rededuca:escuela`). Rutas simples (`/usuarios`), no `/e/[slug]` del SDD.
 - No se puede desactivar ni cambiar de rol al último administrador (`isLastAdmin`); Back también responde 409.
 

@@ -41,7 +41,7 @@ export function toTeacherPatch(values: TeacherFormValues) {
     };
 }
 
-// Alta: POST /users con rol docente (existe) y luego PATCH /teachers/:id con los datos laborales
-export function toTeacherUser(values: TeacherFormValues) {
-    return { email: values.email.trim(), fullName: values.fullName.trim(), role: "teacher" as const, phone: values.phone.trim() || undefined };
+// Alta: POST /teachers (cuenta + perfil + membresía docente) con los datos laborales
+export function toTeacherCreate(values: TeacherFormValues) {
+    return { fullName: values.fullName.trim(), email: values.email.trim(), ...toTeacherPatch(values), phone: values.phone.trim() || undefined };
 }

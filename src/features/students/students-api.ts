@@ -17,7 +17,7 @@ export const STUDENTS_PATH = "/students";
 export const STUDENTS_PAGE_SIZE = 25;
 const SORT_PARAM = { "last-asc": "lastName", "last-desc": "-lastName", course: "course", enrollment: "enrollmentDate" } as const;
 
-// GET /students. courseId, q, status, page y limit ya existen; shift, schoolYear y sort están pedidos a Back.
+// GET /students. Filtros: courseId, q, status, shift, schoolYear y sort (la división sale del curso).
 export function studentsListPath(filters: StudentFilters): string {
     const params = new URLSearchParams();
     if (filters.q.trim()) params.set("q", filters.q.trim());

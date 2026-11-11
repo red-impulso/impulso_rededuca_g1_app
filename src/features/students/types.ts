@@ -65,7 +65,7 @@ export type StudentProfile = {
     observations: { academic: string | null; institutional: string | null };
 };
 
-// GET /students/:id/activity (pedido a Back)
+// GET /students/:id/activity
 export type ActivityKind = "grade" | "attendance" | "announcement" | "event";
 export type StudentActivity = {
     id: string;
