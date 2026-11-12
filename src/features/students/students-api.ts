@@ -130,7 +130,8 @@ const ACTIVITY_KINDS: ActivityKind[] = ["grade", "attendance", "announcement", "
 
 function parseActivity(value: unknown): StudentActivity | null {
     if (!isRecord(value) || typeof value.id !== "string" || !text(value.title) || !text(value.occurredAt)) return null;
-    const kind = ACTIVITY_KINDS.find((item) => item === value.kind) ?? "event";
+    // Back usa "kind"; se acepta también "type" por si llega con el nombre viejo
+    const kind = ACTIVITY_KINDS.find((item) => item === (value.kind ?? value.type)) ?? "event";
     return { id: value.id, kind, title: value.title as string, occurredAt: value.occurredAt as string };
 }
 

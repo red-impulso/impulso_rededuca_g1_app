@@ -104,7 +104,8 @@ function parseBlock(value: unknown): ScheduleBlock | null {
     if (!isRecord(value)) return null;
     const day = num(value.day);
     if (day === null || day < 1 || day > 5 || !text(value.start) || !text(value.end)) return null;
-    return { day: day as ScheduleBlock["day"], start: value.start as string, end: value.end as string, subject: text(value.subject) ?? "", course: text(value.course) ?? "" };
+    // Back envía subjectName/courseName; se aceptan los nombres cortos por compatibilidad
+    return { day: day as ScheduleBlock["day"], start: value.start as string, end: value.end as string, subject: text(value.subjectName) ?? text(value.subject) ?? "", course: text(value.courseName) ?? text(value.course) ?? "" };
 }
 
 export function parseTeacherDetail(data: unknown): TeacherDetail | null {

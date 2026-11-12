@@ -98,7 +98,7 @@ describe("teachers-schemas", () => {
         expect(teacherSchema.safeParse(values).success).toBe(true);
         expect(teacherSchema.safeParse({ ...values, maxWeeklyHours: "81" }).success).toBe(false);
         expect(teacherSchema.safeParse({ ...values, email: "x" }).success).toBe(false);
-        expect(toTeacherPatch(values)).toEqual({ fileNumber: "L-1", employmentStatus: "titular", status: "activo", maxWeeklyHours: 30, hiredAt: "2020-01-02" });
+        expect(toTeacherPatch(values)).toEqual({ fullName: "Ana Paz", email: "ana@x.com", phone: undefined, fileNumber: "L-1", employmentStatus: "titular", status: "activo", maxWeeklyHours: 30, hiredAt: "2020-01-02" });
     });
 });
 

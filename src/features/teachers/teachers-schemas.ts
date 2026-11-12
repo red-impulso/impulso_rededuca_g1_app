@@ -33,6 +33,9 @@ export function teacherToValues(teacher: TeacherDetail | null): TeacherFormValue
 // PATCH /teachers/:id: solo lo que Back acepta
 export function toTeacherPatch(values: TeacherFormValues) {
     return {
+        fullName: values.fullName.trim() || undefined,
+        email: values.email.trim() || undefined,
+        phone: values.phone.trim() || undefined,
         fileNumber: values.fileNumber.trim() || undefined,
         employmentStatus: values.employmentStatus,
         status: values.status,
@@ -41,7 +44,8 @@ export function toTeacherPatch(values: TeacherFormValues) {
     };
 }
 
-// Alta: POST /teachers (cuenta + perfil + membresía docente) con los datos laborales
+// Alta: POST /teachers (cuenta + perfil + membresía docente) con los datos laborales.
+// fullName y email son obligatorios en el alta: van después del patch para no quedar opcionales.
 export function toTeacherCreate(values: TeacherFormValues) {
-    return { fullName: values.fullName.trim(), email: values.email.trim(), ...toTeacherPatch(values), phone: values.phone.trim() || undefined };
+    return { ...toTeacherPatch(values), fullName: values.fullName.trim(), email: values.email.trim() };
 }
