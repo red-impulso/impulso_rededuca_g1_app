@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
+import { readSelection, writeSelection } from "./grade-draft-storage";
 import type { GradeRow, GradingPeriod, TeacherSubject } from "./types";
 
 // Materias y períodos: se piden una sola vez, juntos
@@ -27,13 +28,16 @@ function toMessage(error: unknown, fallback: string): string {
 
 // Trae del Back lo que necesita la planilla del docente:
 // sus materias, los períodos y las notas de la materia y el período elegidos.
-export function useGradesData() {
+// scope: usuario y escuela, para recordar la última materia y período elegidos
+export function useGradesData(scope: string) {
     const [catalog, setCatalog] = useState<CatalogState>({ status: "loading" });
     const [catalogAttempt, setCatalogAttempt] = useState(0);
 
-    // Lo que el docente eligió (null = no eligió nada, se usa el primero de la lista)
-    const [subjectChoice, setSubjectChoice] = useState<string | null>(null);
-    const [periodChoice, setPeriodChoice] = useState<string | null>(null);
+    // Lo que el docente eligió (null = no eligió nada, se usa el primero de la lista).
+    // Arranca con lo elegido la última vez; en el servidor no hay localStorage y queda null,
+    // sin diferencias al hidratar porque hasta tener el catálogo solo se muestra "cargando".
+    const [subjectChoice, setSubjectChoice] = useState<string | null>(() => readSelection(scope).subjectId);
+    const [periodChoice, setPeriodChoice] = useState<string | null>(() => readSelection(scope).periodId);
 
     const [sheetResult, setSheetResult] = useState<SheetResult | null>(null);
     const [sheetAttempt, setSheetAttempt] = useState(0);
@@ -122,14 +126,24 @@ export function useGradesData() {
         setSheetAttempt((value) => value + 1);
     }, []);
 
+    const selectSubject = (id: string) => {
+        setSubjectChoice(id);
+        writeSelection(scope, { subjectId: id, periodId });
+    };
+
+    const selectPeriod = (id: string) => {
+        setPeriodChoice(id);
+        writeSelection(scope, { subjectId, periodId: id });
+    };
+
     return {
         catalog,
         subjects,
         periods,
         subject,
         period,
-        selectSubject: setSubjectChoice,
-        selectPeriod: setPeriodChoice,
+        selectSubject,
+        selectPeriod,
         sheet,
         retryCatalog,
         retrySheet,

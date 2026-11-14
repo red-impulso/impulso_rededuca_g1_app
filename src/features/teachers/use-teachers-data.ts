@@ -1,7 +1,7 @@
 "use client";
 
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiFetch } from "@/lib/api";
+import { ApiError, apiFetch } from "@/lib/api";
 import { json, parsed, useInstitutionId } from "../school/use-school-data";
 import { parseStudentActivity } from "../students/students-api";
 import { courseAssignmentsPath, subjectTeacherPath } from "../school/school-api";
@@ -159,7 +159,7 @@ export function useSaveAssignments(courseId: string) {
             try {
                 await apiFetch<unknown>(courseAssignmentsSavePath(courseId), json("PUT", { assignments }));
             } catch (error) {
-                if (!(error instanceof Error && "status" in error && (error as { status: number }).status === 404)) throw error;
+                if (!(error instanceof ApiError && error.status === 404)) throw error;
                 for (const item of assignments) await apiFetch<unknown>(subjectTeacherPath(item.subjectId), json("PUT", { teacherMembershipId: item.teacherMembershipId }));
             }
         },

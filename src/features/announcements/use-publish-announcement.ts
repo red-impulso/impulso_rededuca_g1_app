@@ -31,19 +31,23 @@ export function usePublishAnnouncement() {
                 method: "POST",
                 body: JSON.stringify(payload),
             });
+            // Publicado: queda bloqueado hasta reset(), para que un clic mientras se cierra
+            // el formulario no lo publique otra vez
             setState({ status: "published" });
             return true;
         } catch (error) {
             const status = error instanceof ApiError ? error.status : null;
             setState({ status: "error", ...describePublishError(status) });
-            return false;
-        } finally {
             busy.current = false;
+            return false;
         }
     }, []);
 
     // Vuelve a "sin estado" (por ejemplo, al abrir el formulario de nuevo)
-    const reset = useCallback(() => setState({ status: "idle" }), []);
+    const reset = useCallback(() => {
+        busy.current = false;
+        setState({ status: "idle" });
+    }, []);
 
     return { state, publish, reset };
 }

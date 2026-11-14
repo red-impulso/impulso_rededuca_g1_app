@@ -69,3 +69,5 @@ export const FORBIDDEN_TEXT = "Solo la dirección y la administración pueden ve
 // ---- Pantalla para otros roles (Back responde 403 a docentes y tutores) ----
 export const NOT_ALLOWED_TITLE = "Esta pantalla es para la dirección";
 export const NOT_ALLOWED_DESCRIPTION = "Con tu perfil no podés ver el tablero de la institución.";
+export const NOT_ALLOWED_ACTION_LABEL = "Ir al inicio";
+export const NOT_ALLOWED_ACTION_HREF = "/inicio";

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -8,10 +8,13 @@ import { ErrorState } from "@/components/ui/error-state";
 import { SaveBar } from "@/components/ui/save-bar";
 import { SkeletonLines } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast";
+import { useSession } from "@/features/session/use-session";
 import { useUnsavedChangesGuard } from "@/lib/use-unsaved-changes-guard";
+import { draftsStorageKey, readDrafts, writeDrafts } from "./grade-draft-storage";
 import {
     getObservationState,
     getRowState,
+    pruneDrafts,
     setDraft,
     setObservationDraft,
     summarizeDrafts,
@@ -54,6 +57,8 @@ function LoadingCard() {
 
 // Planilla de notas del docente: materia + período → una nota por alumno
 export function GradesSheet() {
+    const { profile, active } = useSession();
+    const scope = `${profile.id}:${active.institutionId}`;
     const {
         catalog,
         subjects,
@@ -65,7 +70,7 @@ export function GradesSheet() {
         sheet,
         retryCatalog,
         retrySheet,
-    } = useGradesData();
+    } = useGradesData(scope);
 
     const { state: saveState, save, reset: resetSave } = useSaveGrades();
     const { showToast } = useToast();
@@ -79,6 +84,22 @@ export function GradesSheet() {
     const [savedObservations, setSavedObservations] = useState<Record<string, string>>({});
     const [query, setQuery] = useState("");
     const [descending, setDescending] = useState(false);
+
+    // Borrador guardado en este dispositivo para la materia y el período elegidos
+    const storageKey = subject && period ? draftsStorageKey(scope, subject.id, period.id) : null;
+    const [draftsKey, setDraftsKey] = useState<string | null>(null);
+    // true si al entrar se recuperó un borrador de una visita anterior
+    const [restored, setRestored] = useState(false);
+
+    // Al entrar o cambiar de materia/período se cargan los borradores de esa planilla.
+    // Se hace durante el render (no en un efecto) para no mostrar ni guardar la planilla vacía un instante.
+    if (storageKey !== draftsKey) {
+        const stored = storageKey ? readDrafts(storageKey) : null;
+        setDraftsKey(storageKey);
+        setDrafts(stored?.grades ?? {});
+        setObservationDrafts(stored?.observations ?? {});
+        setRestored(stored !== null);
+    }
 
     const serverRows = sheet.status === "ready" ? sheet.rows : NO_ROWS;
     const rows = useMemo(() => {
@@ -99,6 +120,18 @@ export function GradesSheet() {
         [rows, drafts, observationDrafts],
     );
     const saving = saveState.status === "saving";
+
+    // Cada cambio se guarda en el dispositivo; sin cambios pendientes se borra.
+    // Con la planilla cargada se descarta lo que ya no es un cambio frente a Back.
+    useEffect(() => {
+        if (!storageKey || draftsKey !== storageKey) return;
+        writeDrafts(
+            storageKey,
+            sheet.status === "ready"
+                ? pruneDrafts(rows, drafts, observationDrafts)
+                : { grades: drafts, observations: observationDrafts },
+        );
+    }, [storageKey, draftsKey, sheet.status, rows, drafts, observationDrafts]);
 
     // Aviso antes de perder cambios: al tocar un enlace, cambiar de materia o período
     // y al cerrar la pestaña
@@ -141,10 +174,9 @@ export function GradesSheet() {
         return descending ? [...filtered].reverse() : filtered;
     }, [rows, query, descending]);
 
-    // Al cambiar de materia o período las notas escritas ya no corresponden
+    // Al cambiar de materia o período los borradores de la planilla anterior quedan guardados
+    // en el dispositivo y se cargan los de la nueva
     function handleSubjectChange(subjectId: string) {
-        setDrafts({});
-        setObservationDrafts({});
         setSavedValues({});
         setSavedObservations({});
         setQuery("");
@@ -153,8 +185,6 @@ export function GradesSheet() {
     }
 
     function handlePeriodChange(periodId: string) {
-        setDrafts({});
-        setObservationDrafts({});
         setSavedValues({});
         setSavedObservations({});
         resetSave();
@@ -172,9 +202,11 @@ export function GradesSheet() {
         if (saveState.status !== "idle") resetSave();
     }
 
+    // Descarta el borrador, también el guardado en el dispositivo
     function handleCancel() {
         setDrafts({});
         setObservationDrafts({});
+        setRestored(false);
         resetSave();
     }
 
@@ -201,6 +233,7 @@ export function GradesSheet() {
         }));
         setDrafts({});
         setObservationDrafts({});
+        setRestored(false);
         showToast(result.saved === 0 ? NOTHING_TO_SAVE_MESSAGE : SAVED_MESSAGE);
     }
 
@@ -369,6 +402,15 @@ export function GradesSheet() {
                 </button>
             </div>
 
+            {restored && sheet.status === "ready" && summary.changedCount > 0 && (
+                <p role="status" className="rounded-lg bg-surface px-4 py-3 text-sm text-ink ring-1 ring-line">
+                    {summary.changedCount === 1
+                        ? "Recuperamos 1 cambio sin guardar de tu última visita."
+                        : `Recuperamos ${summary.changedCount} cambios sin guardar de tu última visita.`}{" "}
+                    Revísalos y guárdalos, o toca «Cancelar» para descartarlos.
+                </p>
+            )}
+
             {body}
 
             {sheet.status === "ready" && rows.length > 0 && (
@@ -387,10 +429,9 @@ export function GradesSheet() {
                 title="Cambios sin guardar"
                 description={`Tienes ${
                     summary.changedCount === 1 ? "1 cambio" : `${summary.changedCount} cambios`
-                } sin guardar. Si sales, se perderán.`}
+                } sin guardar. Quedan como borrador en este dispositivo, pero no se envían hasta que los guardes.`}
                 confirmLabel="Salir sin guardar"
                 cancelLabel="Seguir editando"
-                destructive
                 onConfirm={handleLeave}
                 onCancel={handleStay}
             />

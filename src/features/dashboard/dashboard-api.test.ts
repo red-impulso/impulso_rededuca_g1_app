@@ -40,7 +40,7 @@ describe("describeLoadError", () => {
     });
 
     it("sin permiso", () => {
-        expect(describeLoadError(403)).toEqual({ kind: "error", message: FORBIDDEN_TEXT });
+        expect(describeLoadError(403)).toEqual({ kind: "forbidden", message: FORBIDDEN_TEXT });
     });
 
     it("error del servidor", () => {

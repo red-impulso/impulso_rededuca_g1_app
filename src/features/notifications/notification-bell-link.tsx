@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { MouseEvent } from "react";
 import { BellIcon } from "./bell-icon";
 import { badgeText } from "./notifications-rules";
 import { BADGE_CLASS, BELL_ACTIVE_CLASS, BELL_CLASS, NOTIFICATIONS_HREF, bellAriaLabel } from "./notifications-ui";
@@ -8,18 +9,21 @@ type NotificationBellLinkProps = {
     count: number | null;
     // true si ya se está en la bandeja
     active: boolean;
+    // En computadora abre el panel lateral (hace preventDefault); si no, el enlace navega
+    onClick?: (event: MouseEvent<HTMLAnchorElement>) => void;
 };
 
 // Campanita del header: enlace a la bandeja con el contador de no leídas (tope "99+").
 // El nombre accesible dice cuántas hay ("Notificaciones, 3 sin leer"): no depende del color.
 // Diseño provisorio: pendiente de confirmar con UX (clases y textos en notifications-ui.ts).
-export function NotificationBellLink({ count, active }: NotificationBellLinkProps) {
+export function NotificationBellLink({ count, active, onClick }: NotificationBellLinkProps) {
     const unread = count ?? 0;
     const badge = badgeText(unread);
 
     return (
         <Link
             href={NOTIFICATIONS_HREF}
+            onClick={onClick}
             aria-label={bellAriaLabel(unread)}
             aria-current={active ? "page" : undefined}
             className={`relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg outline-blue/40 focus-visible:outline-3 ${

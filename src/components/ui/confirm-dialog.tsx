@@ -11,6 +11,8 @@ type ConfirmDialogProps = {
   // Acción destructiva (por ejemplo cerrar sesión): el botón de confirmar va en rojo
   destructive?: boolean;
   loading?: boolean;
+  // Texto del botón de confirmar mientras carga (por ejemplo "Publicando…")
+  loadingLabel?: string;
   onConfirm: () => void;
   onCancel: () => void;
 };
@@ -24,6 +26,7 @@ export function ConfirmDialog({
   cancelLabel = "Cancelar",
   destructive = false,
   loading = false,
+  loadingLabel,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
@@ -71,11 +74,12 @@ export function ConfirmDialog({
             type="button"
             onClick={onConfirm}
             disabled={loading}
+            aria-busy={loading}
             className={`rounded-lg px-4 py-2.5 font-semibold text-white disabled:opacity-60 ${
               destructive ? "bg-error" : "bg-brand"
             }`}
           >
-            {confirmLabel}
+            {loading && loadingLabel ? loadingLabel : confirmLabel}
           </button>
         </div>
       </div>

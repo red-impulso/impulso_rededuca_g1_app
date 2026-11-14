@@ -177,8 +177,7 @@ Reglas del proyecto para cualquier asistente de código o integrante del equipo.
 ## Tests
 
 - Vitest incluye `src/**/*.test.{ts,tsx}`. No hay `jsdom` ni `@testing-library`: los componentes se prueban con `renderToStaticMarkup` (de `react-dom/server`), por eso conviene separar la parte que solo dibuja (props) de la que pide datos.
-- `vitest.config.ts` no define el alias `@/`: en los tests se importa con rutas relativas y se evita importar módulos que traigan `@/lib/api` (usar `import type`).
-- Un componente que se prueba con `renderToStaticMarkup` no puede importar con `@/` (ni de forma indirecta). Por eso los componentes de dibujo (`announcement-card.tsx`, `announcement-form-fields.tsx`) solo importan con rutas relativas, y los que usan `@/` (`announcements-screen.tsx`, `announcement-form.tsx`, los hooks) no llevan test.
+- `vitest.config.ts` define el alias `@/` → `src/` (alineado con `tsconfig.json`), aunque en componentes de dibujo puros conviene mantener imports relativos para facilitar su aislamiento.
 
 ## Flujo de trabajo
 
@@ -186,3 +185,15 @@ Reglas del proyecto para cualquier asistente de código o integrante del equipo.
 - Las ramas se crean desde `origin/main` (`git switch -c <rama> origin/main`) y se suben con `git push -u origin <rama>`.
 - Antes de cada commit: `git status -s` y confirmar que no hay archivos `.env*` ni de otra tarea.
 - No crear ramas ni subir cambios sin acuerdo del grupo.
+
+## Arreglos de QA
+
+Correcciones aplicadas y verificadas (unit tests, lint y build en verde):
+
+- [x] **M1 (Calificaciones - Borradores persistentes)**: Implementada persistencia local en `localStorage` (`src/features/grades/grade-draft-storage.ts`) separada por `usuario + escuela + materia + período` (con expiración a 30 días y poda automática de cambios ya guardados en Back vía `pruneDrafts`). Recuerda la última materia/período seleccionados y muestra aviso de recuperación al recargar o volver a entrar.
+- [x] **M3 (Comunicados - Prevención de doble clic M3-F03)**: Sellado el bloqueo sincrónico en `use-publish-announcement.ts` hasta que se ejecute `reset()` (tras cerrar el formulario) y agregado soporte de `loadingLabel` (`"Publicando…"`) y `aria-busy` en `ConfirmDialog` (`src/components/ui/confirm-dialog.tsx`) para evitar envíos duplicados.
+- [x] **M4 (Notificaciones - Panel lateral y zona horaria M4-F02)**:
+  - En vistas de escritorio (`>= 1024px` / `lg`), la campanita abre un panel lateral deslizante (`src/features/notifications/notifications-drawer.tsx`) en lugar de navegar a pantalla completa, manteniendo la navegación directa a `/notificaciones` en móvil/tablet o con `Ctrl/Cmd + clic`.
+  - Ajustada la constante `ARGENTINA_TIME_ZONE` en `notifications-rules.ts` a `"America/Argentina/Jujuy"` para el formateo y agrupación por día (`Hoy`, `Ayer`).
+- [x] **M5 (Tablero - Restricción de acceso M5-02)**: Unificado el estado de acceso restringido (`DashboardNotAllowed` en `dashboard-screen.tsx`) tanto para bloqueo preventivo por rol (`teacher` / `guardian`) como para respuestas `403` del Back, ocultando el subtítulo institucional y agregando enlace de retorno (`Ir al inicio` → `/inicio`).
+- [x] **Contratos API / Config**: Estandarizada la detección de `404` con `instanceof ApiError` en `src/features/teachers/use-teachers-data.ts` y configurado el alias `@/` en `vitest.config.ts`.
