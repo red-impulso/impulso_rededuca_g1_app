@@ -13,12 +13,13 @@ import type {
 // GET /dashboard → DashboardSummary (solo admin y director, 403 para el resto)
 export const DASHBOARD_PATH = "/dashboard";
 
-export type ErrorKind = "offline" | "error";
+// "forbidden": Back no lo deja ver (403); se muestra la pantalla de "solo dirección", sin reintentar
+export type ErrorKind = "offline" | "error" | "forbidden";
 
 // Texto del error al cargar el tablero. status = código de la API (0 si no hubo respuesta).
 export function describeLoadError(status: number | null): { kind: ErrorKind; message: string } {
     if (status === 0) return { kind: "offline", message: OFFLINE_TEXT };
-    if (status === 403) return { kind: "error", message: FORBIDDEN_TEXT };
+    if (status === 403) return { kind: "forbidden", message: FORBIDDEN_TEXT };
     if (status !== null && status >= 500) return { kind: "error", message: SERVER_ERROR_TEXT };
     return { kind: "error", message: LOAD_ERROR_TEXT };
 }

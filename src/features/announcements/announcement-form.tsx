@@ -22,6 +22,7 @@ import {
     LEAVE_STAY_LABEL,
     LEAVE_TITLE,
     PUBLISHED_MESSAGE,
+    PUBLISHING_LABEL,
 } from "./announcements-ui";
 import type { AnnouncementForm as AnnouncementFormValues, AnnouncementFormField } from "./types";
 import { useAnnouncementCourses } from "./use-announcement-courses";
@@ -48,7 +49,8 @@ export function AnnouncementForm({ role, onPublished, onClose }: AnnouncementFor
     const [confirmPublishOpen, setConfirmPublishOpen] = useState(false);
     const [confirmLeaveOpen, setConfirmLeaveOpen] = useState(false);
 
-    const publishing = publishState.status === "publishing";
+    // Ya publicado también cuenta: los botones siguen deshabilitados hasta que se cierra el formulario
+    const publishing = publishState.status === "publishing" || publishState.status === "published";
     const dirty = isFormDirty(form, role);
     const errors = validateForm(form, role, courses);
     const visibleErrors = pickVisibleErrors(errors, touched, submitted);
@@ -140,6 +142,7 @@ export function AnnouncementForm({ role, onPublished, onClose }: AnnouncementFor
                 confirmLabel={CONFIRM_PUBLISH_LABEL}
                 cancelLabel={CONFIRM_PUBLISH_BACK_LABEL}
                 loading={publishing}
+                loadingLabel={PUBLISHING_LABEL}
                 onConfirm={handleConfirmPublish}
                 // Mientras publica no se puede cancelar (evita dejar la publicación a medias en pantalla)
                 onCancel={() => {

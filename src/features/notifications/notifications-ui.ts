@@ -7,6 +7,12 @@
 export const SCREEN_TITLE = "Notificaciones";
 export const NOTIFICATIONS_HREF = "/notificaciones";
 
+// ---- Pendiente UX: panel lateral en computadora ----
+// Desde este ancho (lg de Tailwind) la campanita abre el panel en vez de ir a la pantalla
+export const DRAWER_MEDIA_QUERY = "(min-width: 64rem)";
+export const SEE_ALL_LABEL = "Ver todas";
+export const CLOSE_DRAWER_LABEL = "Cerrar notificaciones";
+
 // Nombre accesible de la campanita: "Notificaciones, 3 sin leer"
 export function bellAriaLabel(count: number): string {
     if (count <= 0) return SCREEN_TITLE;

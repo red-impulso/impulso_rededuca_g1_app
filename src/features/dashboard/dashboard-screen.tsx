@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import type { ReactNode } from "react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
@@ -9,8 +10,11 @@ import { canSeeDashboard, isInstitutionEmpty } from "./dashboard-rules";
 import {
     EMPTY_INSTITUTION_TITLE,
     LOADING_TEXT,
+    NOT_ALLOWED_ACTION_HREF,
+    NOT_ALLOWED_ACTION_LABEL,
     NOT_ALLOWED_DESCRIPTION,
     NOT_ALLOWED_TITLE,
+    SCREEN_SUBTITLE,
 } from "./dashboard-ui";
 import { DashboardView } from "./dashboard-view";
 import { useDashboard } from "./use-dashboard";
@@ -25,6 +29,21 @@ function LoadingCard() {
     );
 }
 
+// Docentes y tutores (o un 403 de Back): el mismo mensaje institucional, con salida al inicio
+export function DashboardNotAllowed() {
+    return (
+        <EmptyState
+            title={NOT_ALLOWED_TITLE}
+            description={NOT_ALLOWED_DESCRIPTION}
+            action={
+                <Link href={NOT_ALLOWED_ACTION_HREF} className="font-semibold text-blue">
+                    {NOT_ALLOWED_ACTION_LABEL}
+                </Link>
+            }
+        />
+    );
+}
+
 // Pide el tablero y muestra cargando, error, institución vacía o los datos
 function DashboardContent() {
     const { state, reload } = useDashboard();
@@ -33,7 +52,13 @@ function DashboardContent() {
     if (state.status === "loading") {
         content = <LoadingCard />;
     } else if (state.status === "error") {
-        content = <ErrorState message={state.message} onRetry={reload} />;
+        // Reintentar no cambia un 403: se muestra lo mismo que al entrar con otro rol
+        content =
+            state.kind === "forbidden" ? (
+                <DashboardNotAllowed />
+            ) : (
+                <ErrorState message={state.message} onRetry={reload} />
+            );
     } else if (isInstitutionEmpty(state.summary)) {
         content = <EmptyState title={EMPTY_INSTITUTION_TITLE} />;
     } else {
@@ -42,13 +67,24 @@ function DashboardContent() {
     return content;
 }
 
-// Tablero de dirección: solo admin y director (el menú ya lo oculta al resto)
+// Tablero de dirección: solo admin y director (el menú ya lo oculta al resto).
+// Sin permiso no se pide GET /dashboard.
 export function DashboardScreen() {
     const { active } = useSession();
 
+    // El subtítulo ("Resumen de la institución") solo acompaña al tablero, no al aviso
     if (!canSeeDashboard(active.role)) {
-        return <EmptyState title={NOT_ALLOWED_TITLE} description={NOT_ALLOWED_DESCRIPTION} />;
+        return (
+            <div className="mt-5">
+                <DashboardNotAllowed />
+            </div>
+        );
     }
 
-    return <DashboardContent />;
+    return (
+        <>
+            <p className="mb-6 text-sm text-muted">{SCREEN_SUBTITLE}</p>
+            <DashboardContent />
+        </>
+    );
 }

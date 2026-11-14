@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+    ARGENTINA_TIME_ZONE,
     adjustCount,
     badgeText,
     countUnread,
@@ -73,6 +74,10 @@ describe("isUnread y countUnread", () => {
 });
 
 describe("dayInArgentina", () => {
+    it("usa la zona horaria de Jujuy", () => {
+        expect(ARGENTINA_TIME_ZONE).toBe("America/Argentina/Jujuy");
+    });
+
     it("usa la hora de Argentina, no la de UTC", () => {
         // 4 nov 01:30 UTC = 3 nov 22:30 en Argentina
         expect(dayInArgentina(new Date("2026-11-04T01:30:00Z"))).toBe("2026-11-03");
@@ -107,6 +112,20 @@ describe("groupByDay", () => {
             new Date("2027-01-01T15:00:00Z"),
         );
         expect(groups[0].label).toBe(YESTERDAY_LABEL);
+    });
+
+    it("a las 23:59 de Jujuy sigue siendo Hoy aunque en UTC ya sea el día siguiente", () => {
+        // 5 nov 02:59 UTC = 4 nov 23:59 en Jujuy
+        const groups = groupByDay(
+            [
+                makeItem({ id: "noche", createdAt: "2026-11-05T02:30:00Z" }),
+                makeItem({ id: "maniana", createdAt: "2026-11-04T12:00:00Z" }),
+            ],
+            new Date("2026-11-05T02:59:00Z"),
+        );
+        expect(groups).toHaveLength(1);
+        expect(groups[0].label).toBe(TODAY_LABEL);
+        expect(groups[0].day).toBe("2026-11-04");
     });
 
     it("sin notificaciones no hay grupos; las fechas inválidas se saltean", () => {

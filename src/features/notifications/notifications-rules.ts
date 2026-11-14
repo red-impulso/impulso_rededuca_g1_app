@@ -13,7 +13,8 @@ import type { NotificationGroup, NotificationItem } from "./types";
 // Reglas y lógica de notificaciones.
 // No usa React ni la API, para poder probarla fácil.
 
-const ARGENTINA_TIME_ZONE = "America/Argentina/Buenos_Aires";
+// Fechas, horas y grupos por día siempre con la hora de Jujuy, sin importar la zona del dispositivo
+export const ARGENTINA_TIME_ZONE = "America/Argentina/Jujuy";
 
 const MONTHS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 

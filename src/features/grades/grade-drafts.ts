@@ -105,6 +105,26 @@ export function setObservationDraft(
     return next;
 }
 
+// Deja solo los borradores que siguen siendo cambios frente a lo que trae Back.
+// Descarta alumnos que ya no están en la planilla o notas que ya se guardaron (por ejemplo, desde otro dispositivo).
+export function pruneDrafts(
+    rows: GradeRow[],
+    drafts: GradeDrafts,
+    observationDrafts: ObservationDrafts,
+): { grades: GradeDrafts; observations: ObservationDrafts } {
+    const grades: GradeDrafts = {};
+    const observations: ObservationDrafts = {};
+    for (const row of rows) {
+        const id = row.student.id;
+        if (id in drafts && getRowState(row, drafts).changed) grades[id] = drafts[id];
+        if (id in observationDrafts) {
+            const state = getObservationState(row, observationDrafts);
+            if (state.changed || state.error) observations[id] = observationDrafts[id];
+        }
+    }
+    return { grades, observations };
+}
+
 export type DraftsSummary = {
     // Cantidad de alumnos con cambios sin guardar (incluye los inválidos)
     changedCount: number;
