@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef } from "react";
+import type { MouseEvent } from "react";
 
 type ConfirmDialogProps = {
   open: boolean;
@@ -32,13 +33,28 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const titleId = useId();
+  // Si se cerró con un toque o clic (no con teclado)
+  const closedByPointer = useRef(false);
 
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
     if (open && !dialog.open) dialog.showModal();
-    if (!open && dialog.open) dialog.close();
+    if (!open && dialog.open) {
+      dialog.close();
+      // close() devuelve el foco al botón que abrió el diálogo (por ejemplo "Salir" del
+      // encabezado). En celular ese botón queda marcado hasta tocar otra parte: si se
+      // cerró con el dedo o el mouse se suelta el foco. Con teclado se deja, para no perderse.
+      const focused = document.activeElement;
+      if (closedByPointer.current && focused instanceof HTMLElement) focused.blur();
+    }
+    closedByPointer.current = false;
   }, [open]);
+
+  // event.detail es 0 cuando el clic viene del teclado (Enter o espacio)
+  function markPointer(event: MouseEvent) {
+    closedByPointer.current = event.detail > 0;
+  }
 
   return (
     <dialog
@@ -47,11 +63,15 @@ export function ConfirmDialog({
       onCancel={(event) => {
         // Escape: dejamos que decida el componente padre
         event.preventDefault();
+        closedByPointer.current = false;
         onCancel();
       }}
       onClick={(event) => {
         // Clic en el fondo oscuro: cancela
-        if (event.target === dialogRef.current) onCancel();
+        if (event.target === dialogRef.current) {
+          markPointer(event);
+          onCancel();
+        }
       }}
       className="m-auto w-[calc(100%-2rem)] max-w-sm rounded-xl border border-line bg-surface p-0 text-ink backdrop:bg-ink/50"
     >
@@ -64,7 +84,10 @@ export function ConfirmDialog({
         <div className="mt-6 flex flex-wrap gap-3">
           <button
             type="button"
-            onClick={onCancel}
+            onClick={(event) => {
+              markPointer(event);
+              onCancel();
+            }}
             disabled={loading}
             className="rounded-lg border border-line bg-page px-4 py-2.5 font-semibold text-ink disabled:opacity-60"
           >
@@ -72,7 +95,10 @@ export function ConfirmDialog({
           </button>
           <button
             type="button"
-            onClick={onConfirm}
+            onClick={(event) => {
+              markPointer(event);
+              onConfirm();
+            }}
             disabled={loading}
             aria-busy={loading}
             className={`rounded-lg px-4 py-2.5 font-semibold text-white disabled:opacity-60 ${
