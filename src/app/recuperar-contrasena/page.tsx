@@ -32,7 +32,10 @@ export default function RecoverPasswordPage() {
     try {
       const supabase = createClient();
       const { error: resetError } =
-        await supabase.auth.resetPasswordForEmail(trimmedEmail);
+        await supabase.auth.resetPasswordForEmail(trimmedEmail, {
+          // El enlace del correo lleva a la pantalla donde se elige la contraseña nueva
+          redirectTo: `${window.location.origin}/nueva-contrasena`,
+        });
       if (resetError) {
         setError(getAuthErrorMessage(resetError));
         return;

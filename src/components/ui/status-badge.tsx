@@ -1,8 +1,8 @@
 type Tone = "success" | "neutral" | "warning";
 
 const TONE_STYLES: Record<Tone, string> = {
-    success: "bg-[#E6F4F2] text-[#0B6B64]",
-    neutral: "bg-[#F1F5F9] text-[#475569]",
+    success: "bg-success-bg text-success",
+    neutral: "bg-page text-muted",
     warning: "bg-warning-bg text-warning",
 };
 

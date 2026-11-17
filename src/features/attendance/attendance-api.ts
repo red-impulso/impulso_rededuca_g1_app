@@ -6,7 +6,8 @@ import type { Role } from "../session/types";
 // Textos provisorios: pendiente de confirmar con UX
 export const SAVED_MESSAGE = "Lista guardada correctamente";
 export const NOTHING_TO_SAVE_MESSAGE = "No había cambios para guardar.";
-export const OFFLINE_MESSAGE = "Sin conexión. Tus cambios no se perdieron.";
+// Lo marcado vive solo en esta pantalla: se avisa que no hay que recargar
+export const OFFLINE_MESSAGE = "Sin conexión. Lo que marcaste sigue en pantalla: no recargues la página e inténtalo de nuevo.";
 export const SAVE_ERROR_MESSAGE = "No pudimos guardar la lista. Inténtalo de nuevo.";
 
 // De dónde sale la lista de cursos según el rol:

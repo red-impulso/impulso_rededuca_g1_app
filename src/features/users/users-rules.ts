@@ -1,3 +1,4 @@
+import { argentinaDayNumber, argentinaShortDateFormat } from "@/lib/argentina-time";
 import type { Role } from "../session/types";
 import { LAST_ACCESS_LABELS, NEVER_TEXT, USER_ROLE_LABELS, USER_STATUS_LABELS } from "./users-texts";
 import type { LastAccessFilter, UserFilters, UserRow, UserStatus } from "./types";
@@ -65,10 +66,11 @@ export function lastAccessText(iso: string | null, now: Date = new Date()): stri
     if (minutes < 60) return `hace ${minutes} min`;
     const hours = Math.floor(minutes / 60);
     if (hours < 24) return `hace ${hours} h`;
-    const days = Math.floor(hours / 24);
+    // "ayer" y los días se cuentan con el calendario de Argentina, no con bloques de 24 h
+    const days = Math.max(1, argentinaDayNumber(now) - argentinaDayNumber(date));
     if (days === 1) return "ayer";
     if (days < 30) return `hace ${days} días`;
-    return new Intl.DateTimeFormat("es-AR", { day: "numeric", month: "short", year: "numeric" }).format(date);
+    return argentinaShortDateFormat.format(date);
 }
 
 export function userInitials(user: Pick<UserRow, "fullName">): string {
@@ -91,4 +93,13 @@ export function can(role: Role, capability: Capability): boolean {
 export function isLastAdmin(user: UserRow, rows: UserRow[]): boolean {
     if (user.role !== "admin" || user.status !== "active") return false;
     return rows.filter((row) => row.role === "admin" && row.status === "active").length <= 1;
+}
+
+// true si la acción (baja o cambio a otro rol) dejaría a la escuela sin administradores activos.
+// activeAdmins = total real que manda Back; si todavía no llegó, se usa lo que se ve en la lista.
+export function removesLastAdmin(users: UserRow[], activeAdmins: number | null, rows: UserRow[]): boolean {
+    const affected = users.filter((user) => user.role === "admin" && user.status === "active");
+    if (affected.length === 0) return false;
+    const total = activeAdmins ?? rows.filter((row) => row.role === "admin" && row.status === "active").length;
+    return affected.length >= total;
 }

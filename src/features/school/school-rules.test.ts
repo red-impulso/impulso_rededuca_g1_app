@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { LOGO_INVALID_TYPE_TEXT, LOGO_TOO_BIG_TEXT } from "./school-texts";
 import {
+    logoFileError,
     isSchoolUnconfigured,
     optionsWith,
     activeSchoolYear,
@@ -261,5 +263,17 @@ describe("isSchoolUnconfigured y optionsWith", () => {
         expect(optionsWith(["A", "B"], "C").map((o) => o.value)).toEqual(["A", "B", "C"]);
         expect(optionsWith(["A", "B"], "A")).toHaveLength(2);
         expect(optionsWith(["A"], null)).toEqual([{ value: "A", label: "A" }]);
+    });
+});
+
+describe("logoFileError", () => {
+    it("acepta PNG, JPG y SVG de hasta 2 MB", () => {
+        expect(logoFileError({ type: "image/png", size: 1024 })).toBeNull();
+        expect(logoFileError({ type: "image/jpeg", size: 2 * 1024 * 1024 })).toBeNull();
+        expect(logoFileError({ type: "image/svg+xml", size: 500 })).toBeNull();
+    });
+    it("rechaza otros tipos (WebP) y archivos de más de 2 MB", () => {
+        expect(logoFileError({ type: "image/webp", size: 1024 })).toBe(LOGO_INVALID_TYPE_TEXT);
+        expect(logoFileError({ type: "image/png", size: 2 * 1024 * 1024 + 1 })).toBe(LOGO_TOO_BIG_TEXT);
     });
 });

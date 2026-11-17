@@ -25,7 +25,7 @@ export function GuardianCard({ link, busy, onEdit, onMakePrimary, onUnlink }: Ca
     return (
         <article className={`rounded-2xl border border-line bg-surface p-4 ${active ? "" : "opacity-70"}`}>
             <div className="flex items-start gap-3">
-                <span aria-hidden="true" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#E8EEF9] font-semibold text-blue">{guardianInitials(link)}</span>
+                <span aria-hidden="true" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue/10 font-semibold text-blue">{guardianInitials(link)}</span>
                 <div className="min-w-0 flex-1">
                     <h4 className="font-semibold break-words text-ink">{link.fullName || EMPTY_VALUE}</h4>
                     <p className="text-sm text-muted">{relationshipLabel(link)}</p>

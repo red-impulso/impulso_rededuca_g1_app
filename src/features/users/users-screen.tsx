@@ -19,13 +19,15 @@ import type { UserAction } from "./user-panels";
 import { UserFormDialog } from "./user-form-dialog";
 import { UsersList } from "./users-list";
 import { ROLES } from "./users-api";
-import { DEFAULT_USER_FILTERS, can, filterChips, hasUserFilters, isLastAdmin, readUserFilters, userFiltersQuery, withUserFilter } from "./users-rules";
+import { DEFAULT_USER_FILTERS, can, filterChips, hasUserFilters, readUserFilters, removesLastAdmin, userFiltersQuery, withUserFilter } from "./users-rules";
+import { openPendingTab } from "@/lib/pending-tab";
 import {
     DEACTIVATE_TEXT,
     EXPORT_USERS_LABEL,
     INVITE_USER_LABEL,
     LAST_ACCESS_LABELS,
     LAST_ADMIN_TEXT,
+    SELF_CHANGE_TEXT,
     LAST_ADMIN_TITLE,
     ROLE_CHANGED_TEXT,
     SAVE_ERROR_TEXT,
@@ -60,7 +62,7 @@ import {
     usersTotalText,
 } from "./users-texts";
 import type { LastAccessFilter, UserFilters, UserRow, UserStatus } from "./types";
-import { useChangeRole, useExportUsers, useResetPassword, useSetActive, useUserCounts, useUsers } from "./use-users-data";
+import { PartialBatchError, useActiveAdminCount, useChangeRole, useExportUsers, useResetPassword, useSetActive, useUserCounts, useUsers } from "./use-users-data";
 
 const PRIMARY = "inline-flex h-11 items-center justify-center gap-2 rounded-[10px] bg-blue px-4 font-semibold text-white outline-blue/40 hover:bg-blue/90 focus-visible:outline-3 disabled:opacity-60";
 const SECONDARY = "inline-flex h-11 items-center justify-center rounded-[10px] border border-line bg-surface px-4 text-sm font-semibold text-ink outline-blue/40 hover:bg-page focus-visible:outline-3 disabled:opacity-60";
@@ -112,7 +114,7 @@ function Filters({ filters, total, onChange }: { filters: UserFilters; total: nu
             {(chips.length > 0 || filters.q.trim()) && (
                 <div className="flex flex-wrap items-center gap-2 text-sm">
                     {chips.map((chip) => (
-                        <button key={chip.key} type="button" onClick={() => set({ [chip.key]: null })} className="inline-flex min-h-9 items-center gap-1 rounded-full bg-[#E8EEF9] px-3 font-semibold text-blue" aria-label={`Quitar filtro ${chip.label}`}>{chip.label} <span aria-hidden="true">✕</span></button>
+                        <button key={chip.key} type="button" onClick={() => set({ [chip.key]: null })} className="inline-flex min-h-11 items-center gap-1 rounded-full bg-blue/10 px-3 font-semibold text-blue" aria-label={`Quitar filtro ${chip.label}`}>{chip.label} <span aria-hidden="true">✕</span></button>
                     ))}
                     <button type="button" onClick={() => onChange(DEFAULT_USER_FILTERS)} className="min-h-11 px-2 font-semibold text-blue hover:underline">Limpiar filtros</button>
                     {total !== null && <span role="status" className="text-muted">{resultsText(total)}</span>}
@@ -126,7 +128,7 @@ function UsersContent() {
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
-    const { active } = useSession();
+    const { active, profile } = useSession();
     const { showToast } = useToast();
     const filters = readUserFilters(searchParams);
     const users = useUsers(filters);
@@ -141,18 +143,30 @@ function UsersContent() {
     const [form, setForm] = useState<{ user: UserRow | null } | null>(null);
     const [confirm, setConfirm] = useState<Confirm>(null);
     const [rolePick, setRolePick] = useState<UserRow[] | null>(null);
-    const setFilters = useCallback((next: UserFilters) => router.replace(`${pathname}${userFiltersQuery(next)}`, { scroll: false }), [router, pathname]);
+    // Al cambiar filtros o página se limpia la selección: así nunca se actúa sobre filas que no se ven
+    const setFilters = useCallback(
+        (next: UserFilters) => {
+            setSelected([]);
+            router.replace(`${pathname}${userFiltersQuery(next)}`, { scroll: false });
+        },
+        [router, pathname],
+    );
+    const activeAdmins = useActiveAdminCount();
     const rows = users.data?.data ?? [];
     const school = active.institutionName;
-    const failed = (error: unknown) => showToast(errorInfo(error, SAVE_ERROR_TEXT).message);
+    const failed = (error: unknown) =>
+        showToast(error instanceof PartialBatchError ? error.message : errorInfo(error, SAVE_ERROR_TEXT).message);
+    const isSelf = (user: UserRow) => user.userId === profile.id;
 
     const onAction = (action: UserAction, user: UserRow) => {
         setMenu(null);
         if (action === "view") return setViewing(user);
         setViewing(null);
         if (action === "edit") return setForm({ user });
+        // Nadie se cambia el rol ni se da de baja a sí mismo (perdería el acceso a esta pantalla)
+        if ((action === "role" || action === "deactivate") && isSelf(user)) return showToast(SELF_CHANGE_TEXT);
         if (action === "role") return setRolePick([user]);
-        if (action === "deactivate" && isLastAdmin(user, rows)) return setConfirm({ kind: "last-admin", users: [user] });
+        if (action === "deactivate" && removesLastAdmin([user], activeAdmins, rows)) return setConfirm({ kind: "last-admin", users: [user] });
         setConfirm({ kind: action, users: [user] });
     };
 
@@ -224,7 +238,20 @@ function UsersContent() {
                     {users.data && <p className="text-sm text-muted">{usersTotalText(users.data.total)} en {school}</p>}
                 </div>
                 <div className="flex gap-2">
-                    <button type="button" disabled={exportUsers.isPending} onClick={() => exportUsers.mutate(selected, { onSuccess: (url) => window.open(url, "_blank", "noopener"), onError: failed })} className={SECONDARY}>{EXPORT_USERS_LABEL}</button>
+                    <button type="button" disabled={exportUsers.isPending} onClick={() => {
+                        // La pestaña se abre en el mismo clic (si no, el navegador la bloquea)
+                        const tab = openPendingTab();
+                        exportUsers.mutate(
+                            selectedRows.map((row) => row.membershipId),
+                            {
+                                onSuccess: (url) => tab.open(url),
+                                onError: (error) => {
+                                    tab.close();
+                                    failed(error);
+                                },
+                            },
+                        );
+                    }} className={SECONDARY}>{EXPORT_USERS_LABEL}</button>
                     <button type="button" onClick={() => setForm({ user: null })} className={PRIMARY}>{INVITE_USER_LABEL}</button>
                 </div>
             </div>
@@ -244,8 +271,11 @@ function UsersContent() {
                 {selectedRows.length > 0 && (
                     <div role="region" aria-label="Acciones en lote" className="flex flex-wrap items-center gap-2 rounded-2xl bg-ink p-3 text-white">
                         <span className="text-sm font-semibold">{usersSelectedText(selectedRows.length)}</span>
-                        <button type="button" onClick={() => setRolePick(selectedRows)} className="h-11 rounded-[10px] px-3 text-sm font-semibold hover:bg-white/10">{USER_MENU.role[0]}</button>
-                        <button type="button" onClick={() => setConfirm(selectedRows.some((row) => isLastAdmin(row, rows)) ? { kind: "last-admin", users: selectedRows } : { kind: "deactivate", users: selectedRows })} className="h-11 rounded-[10px] px-3 text-sm font-semibold hover:bg-white/10">{USER_MENU.deactivate[0]}</button>
+                        <button type="button" onClick={() => (selectedRows.some(isSelf) ? showToast(SELF_CHANGE_TEXT) : setRolePick(selectedRows))} className="h-11 rounded-[10px] px-3 text-sm font-semibold hover:bg-white/10">{USER_MENU.role[0]}</button>
+                        <button type="button" onClick={() => {
+                            if (selectedRows.some(isSelf)) return showToast(SELF_CHANGE_TEXT);
+                            setConfirm(removesLastAdmin(selectedRows, activeAdmins, rows) ? { kind: "last-admin", users: selectedRows } : { kind: "deactivate", users: selectedRows });
+                        }} className="h-11 rounded-[10px] px-3 text-sm font-semibold hover:bg-white/10">{USER_MENU.deactivate[0]}</button>
                         <button type="button" onClick={() => setConfirm({ kind: "reset", users: selectedRows })} className="h-11 rounded-[10px] px-3 text-sm font-semibold hover:bg-white/10">{USER_MENU.reset[0]}</button>
                         <button type="button" onClick={() => setSelected([])} className="ml-auto flex h-11 w-11 items-center justify-center rounded-[10px] hover:bg-white/10" aria-label="Quitar selección">✕</button>
                     </div>
@@ -257,6 +287,15 @@ function UsersContent() {
             <UserFormDialog
                 open={form !== null}
                 user={form?.user ?? null}
+                roleLocked={
+                    form?.user
+                        ? isSelf(form.user)
+                            ? SELF_CHANGE_TEXT
+                            : removesLastAdmin([form.user], activeAdmins, rows)
+                              ? LAST_ADMIN_TEXT
+                              : null
+                        : null
+                }
                 onOpenChange={(open) => !open && setForm(null)}
                 onSaved={(values) => { const created = !form?.user; setForm(null); showToast(created ? `${USER_CREATED_TEXT} ${invitationSentText(values.email)}` : USER_UPDATED_TEXT); }}
             />
@@ -280,7 +319,7 @@ function UsersContent() {
                             const role = new FormData(event.currentTarget).get("rol") as Role;
                             const users = rolePick;
                             setRolePick(null);
-                            setConfirm(users.some((user) => user.role === "admin" && role !== "admin" && isLastAdmin(user, rows)) ? { kind: "last-admin", users } : { kind: "role", users, role });
+                            setConfirm(role !== "admin" && removesLastAdmin(users, activeAdmins, rows) ? { kind: "last-admin", users } : { kind: "role", users, role });
                         }}
                     >
                         <div className="flex flex-col gap-1.5">

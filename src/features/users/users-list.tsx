@@ -5,16 +5,16 @@ import type { UserRow, UserStatus } from "./types";
 
 // Badges con texto + ícono + color (SDD 8.3)
 const ROLE_STYLES: Record<Role, [string, string]> = {
-    admin: ["bg-[#FFEDD5] text-[#9A3412]", "▣"],
-    director: ["bg-[#EFF6FF] text-[#1D4ED8]", "★"],
-    teacher: ["bg-[#E6F4F2] text-[#0B6B64]", "▤"],
-    guardian: ["bg-[#E8ECF4] text-ink", "♥"],
+    admin: ["bg-accent/15 text-ink", "▣"],
+    director: ["bg-blue/10 text-blue", "★"],
+    teacher: ["bg-success-bg text-success", "▤"],
+    guardian: ["bg-line/50 text-ink", "♥"],
 };
 const STATUS_STYLES: Record<UserStatus, [string, string]> = {
-    active: ["bg-[#E6F4F2] text-[#0B6B64]", "✓"],
-    inactive: ["bg-[#F1F5F9] text-[#475569]", "–"],
-    pending: ["bg-[#FEF3C7] text-[#92400E]", "◷"],
-    blocked: ["bg-[#FEE2E2] text-[#B91C1C]", "⊘"],
+    active: ["bg-success-bg text-success", "✓"],
+    inactive: ["bg-page text-muted", "–"],
+    pending: ["bg-warning-bg text-warning", "◷"],
+    blocked: ["bg-error-bg text-error", "⊘"],
 };
 const BADGE = "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold whitespace-nowrap";
 
@@ -30,7 +30,7 @@ export function UserStatusBadge({ status }: { status: UserStatus | null }) {
 }
 
 export function UserAvatar({ user }: { user: UserRow }) {
-    return <span aria-hidden="true" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#E8EEF9] text-sm font-semibold text-blue">{userInitials(user)}</span>;
+    return <span aria-hidden="true" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue/10 text-sm font-semibold text-blue">{userInitials(user)}</span>;
 }
 
 type UsersListProps = {
@@ -54,7 +54,7 @@ export function UsersList({ users, schoolName, selected, onToggle, onToggleAll, 
         <>
             <div className="hidden overflow-x-auto rounded-2xl border border-line bg-surface md:block">
                 <table className="w-full text-left text-sm">
-                    <thead className="bg-[#F1F5F9] text-xs font-semibold text-muted">
+                    <thead className="bg-page text-xs font-semibold text-muted">
                         <tr>
                             <th scope="col" className="w-12 px-4 py-3"><input type="checkbox" className={CHECK} checked={all} onChange={onToggleAll} aria-label="Seleccionar todos" /></th>
                             <th scope="col" className="px-3 py-3">{USER_COLUMNS.user}</th>

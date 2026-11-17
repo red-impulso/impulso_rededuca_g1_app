@@ -13,7 +13,7 @@ function initials(name: string): string {
 }
 
 function SchoolLogo({ name }: { name: string }) {
-    return <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-[#E8EEF9] text-xs font-semibold text-blue">{initials(name)}</span>;
+    return <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-blue/10 text-xs font-semibold text-blue">{initials(name)}</span>;
 }
 
 const SCHOOL_STATUS_LABELS: Record<string, string> = { "en-implementacion": "⏳ En implementación", suspendida: "⚠ Suspendida" };
@@ -30,7 +30,7 @@ function SchoolCard({ membership, current, onChoose }: { membership: Membership;
             role="option"
             aria-selected={current}
             onClick={onChoose}
-            className={`flex min-h-16 w-full items-center gap-3 rounded-2xl border p-3 text-left outline-blue/40 focus-visible:outline-3 ${current ? "border-blue bg-[#E8EEF9]/50" : "border-line hover:bg-page"}`}
+            className={`flex min-h-16 w-full items-center gap-3 rounded-2xl border p-3 text-left outline-blue/40 focus-visible:outline-3 ${current ? "border-blue bg-blue/5" : "border-line hover:bg-page"}`}
         >
             <SchoolLogo name={membership.institutionName} />
             <span className="min-w-0 flex-1">

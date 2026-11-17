@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { initialMembership, switchErrorText } from "../session/institution-switch";
 import { UsersList } from "./users-list";
 import { normalizeQuery, parseUserPage, usersListPath } from "./users-api";
-import { DEFAULT_USER_FILTERS, accessLevel, can, filterChips, isLastAdmin, lastAccessText, readUserFilters, userFiltersQuery } from "./users-rules";
+import { DEFAULT_USER_FILTERS, accessLevel, can, filterChips, isLastAdmin, lastAccessText, readUserFilters, removesLastAdmin, userFiltersQuery } from "./users-rules";
 import { toCreateUserBody, userSchema, userToValues } from "./users-schemas";
 import { showingText, usersNoResultsTitle } from "./users-texts";
 
@@ -43,6 +43,18 @@ describe("users-rules", () => {
         const admin = parseUserPage({ data: [{ ...apiUser, role: "admin" }] })!.data[0];
         expect(isLastAdmin(admin, [admin])).toBe(true);
         expect(isLastAdmin(admin, [admin, { ...admin, membershipId: "m2" }])).toBe(false);
+    });
+    it("último administrador con el total real de Back, no solo la página visible", () => {
+        const admin = parseUserPage({ data: [{ ...apiUser, role: "admin" }] })!.data[0];
+        const other = { ...admin, membershipId: "m2" };
+        // En la página se ve uno solo, pero Back dice que hay 2 activos: se puede dar de baja
+        expect(removesLastAdmin([admin], 2, [admin])).toBe(false);
+        // Elegir a los dos deja la escuela sin administradores
+        expect(removesLastAdmin([admin, other], 2, [admin, other])).toBe(true);
+        // Sin el total de Back se usa lo visible
+        expect(removesLastAdmin([admin], null, [admin])).toBe(true);
+        // Un docente no cuenta
+        expect(removesLastAdmin([{ ...admin, role: "teacher" }], 1, [admin])).toBe(false);
     });
     it("textos de M10", () => {
         expect(usersNoResultsTitle("Peralta")).toBe("No encontramos usuarios para “Peralta”.");

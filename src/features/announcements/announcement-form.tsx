@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useToast } from "@/components/ui/toast";
+import { useUnsavedChangesGuard } from "@/lib/use-unsaved-changes-guard";
 import type { Role } from "../session/types";
 import {
     confirmDescription,
@@ -55,16 +56,9 @@ export function AnnouncementForm({ role, onPublished, onClose }: AnnouncementFor
     const errors = validateForm(form, role, courses);
     const visibleErrors = pickVisibleErrors(errors, touched, submitted);
 
-    // Si hay texto escrito y se intenta cerrar la pestaña, el navegador avisa.
-    // (Los enlaces del menú todavía no avisan: pendiente, igual que el resto de la app.)
-    useEffect(() => {
-        if (!dirty) return;
-        function handleBeforeUnload(event: BeforeUnloadEvent) {
-            event.preventDefault();
-        }
-        window.addEventListener("beforeunload", handleBeforeUnload);
-        return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-    }, [dirty]);
+    // Con texto escrito: el navegador avisa al cerrar la pestaña y los enlaces del sitio
+    // (menú, logo, campanita) preguntan antes de salir. Ya publicado no hace falta avisar.
+    const guard = useUnsavedChangesGuard(dirty && publishState.status !== "published");
 
     function handleChange(patch: Partial<AnnouncementFormValues>) {
         setForm((current) => ({ ...current, ...patch }));
@@ -151,17 +145,25 @@ export function AnnouncementForm({ role, onPublished, onClose }: AnnouncementFor
             />
 
             <ConfirmDialog
-                open={confirmLeaveOpen}
+                open={confirmLeaveOpen || guard.pendingHref !== null}
                 title={LEAVE_TITLE}
                 description={LEAVE_DESCRIPTION}
                 confirmLabel={LEAVE_CONFIRM_LABEL}
                 cancelLabel={LEAVE_STAY_LABEL}
                 destructive
                 onConfirm={() => {
+                    if (guard.pendingHref !== null) {
+                        // Tocó un enlace del sitio: sigue hacia donde iba
+                        guard.leave();
+                        return;
+                    }
                     setConfirmLeaveOpen(false);
                     onClose();
                 }}
-                onCancel={() => setConfirmLeaveOpen(false)}
+                onCancel={() => {
+                    setConfirmLeaveOpen(false);
+                    guard.stay();
+                }}
             />
         </>
     );

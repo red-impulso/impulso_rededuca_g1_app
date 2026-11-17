@@ -26,6 +26,32 @@ export type StudentAttendanceResponse = {
 
 export const NO_RECORDS_TEXT = "Sin registros";
 
+function countOf(value: unknown): number {
+    return typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : 0;
+}
+
+// Respuesta de Back → forma segura: si falta algo (null, undefined) no rompe la pantalla
+export function normalizeStudentAttendance(data: unknown): StudentAttendanceResponse {
+    const value = (data ?? {}) as Partial<Record<"records" | "summary", unknown>>;
+    const records = Array.isArray(value.records)
+        ? value.records.filter(
+              (item): item is StudentAttendanceRecord =>
+                  typeof item === "object" && item !== null && typeof (item as { date?: unknown }).date === "string",
+          )
+        : [];
+    const summary = (value.summary ?? {}) as Partial<Record<keyof StudentAttendanceSummary, unknown>>;
+    return {
+        records,
+        summary: {
+            present: countOf(summary.present),
+            absent: countOf(summary.absent),
+            late: countOf(summary.late),
+            justified: countOf(summary.justified),
+            percentage: typeof summary.percentage === "number" && Number.isFinite(summary.percentage) ? summary.percentage : null,
+        },
+    };
+}
+
 // Textos de error al recuperar la asistencia (provisorios: pendiente de confirmar con UX)
 export const SERVER_ERROR_MESSAGE = "Error del servidor. No pudimos recuperar la asistencia.";
 export const OFFLINE_ERROR_MESSAGE = "Sin conexión. No pudimos recuperar la asistencia.";

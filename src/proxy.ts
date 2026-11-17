@@ -2,8 +2,8 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-// Rutas que se pueden ver sin sesión
-const PUBLIC_PATHS = ["/ingresar", "/recuperar-contrasena"];
+// Rutas que se pueden ver sin sesión (/nueva-contrasena: el enlace del correo de recuperación)
+const PUBLIC_PATHS = ["/ingresar", "/recuperar-contrasena", "/nueva-contrasena"];
 
 function isPublicPath(pathname: string) {
   return PUBLIC_PATHS.some(
@@ -51,6 +51,11 @@ export async function proxy(request: NextRequest) {
   if (!isAuthenticated && !isPublicPath(request.nextUrl.pathname)) {
     const loginUrl = new URL("/ingresar", request.url);
     return NextResponse.redirect(loginUrl);
+  }
+
+  // Con sesión, el formulario de ingreso no tiene sentido: se va al panel
+  if (isAuthenticated && request.nextUrl.pathname === "/ingresar") {
+    return NextResponse.redirect(new URL("/inicio", request.url));
   }
 
   return response;

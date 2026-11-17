@@ -7,6 +7,7 @@ import type { StudentGrade } from "./types";
 // Textos del diseño (M1-UX, sección 7)
 export const SERVER_ERROR_MESSAGE = "Error del servidor. No pudimos recuperar las notas.";
 export const OFFLINE_ERROR_MESSAGE = "Sin conexión. No pudimos recuperar las notas.";
+export const NOT_LINKED_ERROR_MESSAGE = "No encontramos las notas de este hijo. Vuelve a Mis hijos y elígelo de la lista.";
 
 type GradesResult =
     | { studentId: string; status: "ready"; grades: StudentGrade[] }
@@ -20,8 +21,8 @@ export type StudentGradesState =
 function describeError(error: unknown): string {
     if (error instanceof ApiError) {
         if (error.status === 0) return OFFLINE_ERROR_MESSAGE;
-        // Rechazos de la API (por ejemplo, un hijo que no es de esta cuenta): su propio mensaje
-        if (error.status >= 400 && error.status < 500 && error.message) return error.message;
+        // Hijo que no es de esta cuenta o que no existe: texto propio (los de Back son técnicos)
+        if (error.status === 403 || error.status === 404 || error.status === 400) return NOT_LINKED_ERROR_MESSAGE;
     }
     return SERVER_ERROR_MESSAGE;
 }
@@ -35,7 +36,7 @@ export function useStudentGrades(studentId: string) {
         let cancelled = false;
         apiFetch<StudentGrade[]>(`/students/${encodeURIComponent(studentId)}/grades`)
             .then((grades) => {
-                if (!cancelled) setResult({ studentId, status: "ready", grades });
+                if (!cancelled) setResult({ studentId, status: "ready", grades: Array.isArray(grades) ? grades : [] });
             })
             .catch((error: unknown) => {
                 if (cancelled) return;

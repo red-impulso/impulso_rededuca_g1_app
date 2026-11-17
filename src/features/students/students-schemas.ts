@@ -7,6 +7,7 @@ import {
     REQUIRED_FIELD_TEXT,
     maxLengthText,
 } from "./students-texts";
+import { todayInArgentina } from "../attendance/attendance-rules";
 import type { StudentProfile } from "./types";
 
 const optionalText = (max: number) => z.string().trim().max(max, maxLengthText(max));
@@ -25,7 +26,8 @@ export const studentSchema = z.object({
     birthDate: z
         .string()
         .refine(pastDate, INVALID_DATE_TEXT)
-        .refine((value) => value === "" || new Date(value) <= new Date(), FUTURE_DATE_TEXT),
+        // Se compara con "hoy" en Argentina (a las 22 h, en UTC ya es mañana)
+        .refine((value) => value === "" || value <= todayInArgentina(), FUTURE_DATE_TEXT),
     gender: z.string().refine((value) => value === "" || ["Femenino", "Masculino", "Otro"].includes(value), REQUIRED_FIELD_TEXT),
     address: optionalText(200),
     phone: optionalText(40),

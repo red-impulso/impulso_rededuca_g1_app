@@ -1,5 +1,6 @@
 "use client";
 
+import { openPendingTab } from "@/lib/pending-tab";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -65,11 +66,18 @@ function ProfileContent({ studentId }: { studentId: string }) {
           ? { status: "error", message: errorInfo(activity.error, ACTIVITY_LOAD_ERROR_TEXT).message, onRetry: () => void activity.refetch() }
           : { status: "ready", data: activity.data };
 
-    const generateReport = () =>
+    // La pestaña se abre en el mismo clic (si no, el navegador la bloquea) y recibe la dirección después
+    const generateReport = () => {
+        if (report.isPending) return;
+        const tab = openPendingTab();
         report.mutate(studentId, {
-            onSuccess: (url) => window.open(url, "_blank", "noopener"),
-            onError: (error) => showToast(`${REPORT_ERROR_TEXT} ${errorInfo(error, "").message}`.trim()),
+            onSuccess: (url) => tab.open(url),
+            onError: (error) => {
+                tab.close();
+                showToast(`${REPORT_ERROR_TEXT} ${errorInfo(error, "").message}`.trim());
+            },
         });
+    };
 
     const actions = (
         <>

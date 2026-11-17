@@ -41,7 +41,12 @@ export const SAVING_LABEL = "Guardando…";
 export const CHANGE_LOGO_LABEL = "Cambiar logo";
 export const UPLOADING_LOGO_LABEL = "Subiendo logo…";
 export const LOGO_UPDATED_TEXT = "Logo actualizado correctamente";
-export const LOGO_ERROR_TEXT = "No se pudo subir el logo. Revisa tu conexión.";
+export const LOGO_ERROR_TEXT = "No se pudo subir el logo. Inténtalo de nuevo.";
+// Mismos límites que Back (PUT /institution/logo): PNG, JPG o SVG hasta 2 MB
+export const LOGO_MAX_BYTES = 2 * 1024 * 1024;
+export const LOGO_ACCEPTED_TYPES = ["image/png", "image/jpeg", "image/svg+xml"] as const;
+export const LOGO_INVALID_TYPE_TEXT = "El logo tiene que ser una imagen PNG, JPG o SVG.";
+export const LOGO_TOO_BIG_TEXT = "El logo no puede pesar más de 2 MB.";
 export const LAST_UPDATE_LABEL = "Última actualización:";
 export const SWITCH_ON = "Activado";
 export const SWITCH_OFF = "Desactivado";

@@ -1,3 +1,4 @@
+import { argentinaDayNumber, argentinaShortDateFormat } from "@/lib/argentina-time";
 import { EMPTY_VALUE } from "../school/school-texts";
 import { STUDENT_STATUS_LABELS } from "./students-texts";
 import type { StudentFilters, StudentSort, StudentStatus } from "./types";
@@ -80,19 +81,17 @@ export function formatDni(dni: string | null): string {
     return /^\d+$/.test(dni) ? Number(dni).toLocaleString("es-AR") : dni;
 }
 
-function startOfDay(date: Date): number {
-    return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
-}
 
 // Columna "Actualizado": Hoy / Ayer / 8 nov 2026
 export function relativeDay(iso: string | null, now: Date = new Date()): string {
     if (!iso) return EMPTY_VALUE;
     const date = new Date(iso);
     if (Number.isNaN(date.getTime())) return EMPTY_VALUE;
-    const days = Math.round((startOfDay(now) - startOfDay(date)) / 86_400_000);
+    // Días de calendario en Argentina, no en el huso del navegador
+    const days = argentinaDayNumber(now) - argentinaDayNumber(date);
     if (days === 0) return "Hoy";
     if (days === 1) return "Ayer";
-    return new Intl.DateTimeFormat("es-AR", { day: "numeric", month: "short", year: "numeric" }).format(date);
+    return argentinaShortDateFormat.format(date);
 }
 
 // "2027-03-01" → "1/3/2027" sin correr el día por la zona horaria

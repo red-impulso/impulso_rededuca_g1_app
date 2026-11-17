@@ -42,7 +42,7 @@ export function GradeInput({
                 }`}
             />
             {invalid && (
-                <span id={hintId} className="text-xs font-semibold text-error">
+                <span id={hintId} role="alert" className="text-xs font-semibold text-error">
                     {INVALID_GRADE_HINT}
                 </span>
             )}

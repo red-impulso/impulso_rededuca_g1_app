@@ -32,7 +32,7 @@ export function SubjectsList({ subjects, total, onEdit, onAssign, onDelete }: Su
         <div className="flex flex-col gap-3">
             <div className="hidden overflow-x-auto rounded-2xl border border-line bg-surface lg:block">
                 <table className="w-full text-left text-sm">
-                    <thead className="bg-[#F1F5F9] text-xs font-semibold text-muted">
+                    <thead className="bg-page text-xs font-semibold text-muted">
                         <tr>
                             <th scope="col" className="px-4 py-3">{SUBJECT_COLUMNS.subject}</th>
                             <th scope="col" className="px-4 py-3">{SUBJECT_COLUMNS.course}</th>

@@ -16,6 +16,12 @@ export function NotificationBell() {
     const { count } = useUnreadCount();
     const [drawerOpen, setDrawerOpen] = useState(false);
     const onInbox = pathname === NOTIFICATIONS_HREF;
+    // Al cambiar de pantalla (atrás, adelante, un enlace) se cierra el panel lateral
+    const [drawerPath, setDrawerPath] = useState(pathname);
+    if (drawerPath !== pathname) {
+        setDrawerPath(pathname);
+        setDrawerOpen(false);
+    }
 
     function handleClick(event: MouseEvent<HTMLAnchorElement>) {
         // Ctrl/Cmd + clic abre la pantalla en otra pestaña como cualquier enlace

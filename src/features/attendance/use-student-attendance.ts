@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { ApiError, apiFetch } from "@/lib/api";
-import { describeLoadError } from "./student-attendance";
+import { describeLoadError, normalizeStudentAttendance } from "./student-attendance";
 import type { StudentAttendanceResponse } from "./student-attendance";
 
 type AttendanceResult =
@@ -21,9 +21,9 @@ export function useStudentAttendance(studentId: string) {
 
     useEffect(() => {
         let cancelled = false;
-        apiFetch<StudentAttendanceResponse>(`/students/${encodeURIComponent(studentId)}/attendance`)
+        apiFetch<unknown>(`/students/${encodeURIComponent(studentId)}/attendance`)
             .then((data) => {
-                if (!cancelled) setResult({ studentId, status: "ready", data });
+                if (!cancelled) setResult({ studentId, status: "ready", data: normalizeStudentAttendance(data) });
             })
             .catch((error: unknown) => {
                 if (cancelled) return;

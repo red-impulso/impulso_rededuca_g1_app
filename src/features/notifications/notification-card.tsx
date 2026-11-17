@@ -79,7 +79,7 @@ export function NotificationCard({
                     <button
                         type="button"
                         onClick={() => onMarkRead(item)}
-                        disabled={pending}
+                        disabled={pending || deleting}
                         className={`h-11 rounded-[10px] border border-line bg-surface px-3 text-sm font-semibold outline-blue/40 focus-visible:outline-3 disabled:opacity-60 ${UNREAD_TEXT_CLASS}`}
                     >
                         {pending ? MARKING_LABEL : MARK_ONE_LABEL}
@@ -89,7 +89,7 @@ export function NotificationCard({
                     <button
                         type="button"
                         onClick={() => onDelete(item)}
-                        disabled={deleting}
+                        disabled={deleting || pending}
                         aria-label={`${DELETE_LABEL} notificación: ${item.title}`}
                         className={`h-11 rounded-[10px] border border-line bg-surface px-3 text-sm font-semibold outline-blue/40 focus-visible:outline-3 disabled:opacity-60 ${DELETE_BUTTON_CLASS}`}
                     >

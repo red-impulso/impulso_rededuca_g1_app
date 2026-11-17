@@ -7,12 +7,32 @@ import { json, parsed, useInstitutionId } from "../school/use-school-data";
 import { USERS_PATH, USER_COUNTS_PATH, membershipPath, parseUserCounts, parseUserPage, reactivatePath, resetPasswordPath, userPath, usersExportPath, usersListPath } from "./users-api";
 import { toCreateUserBody, toUpdateUserBody } from "./users-schemas";
 import type { UserFormValues } from "./users-schemas";
+import { DEFAULT_USER_FILTERS } from "./users-rules";
 import type { UserFilters, UserRow } from "./types";
+
+// Una acción en lote que salió bien solo para una parte: el mensaje dice cuántos
+export class PartialBatchError extends Error {
+    constructor(done: number, total: number) {
+        super(`Se aplicó a ${done} de ${total}. No pudimos con ${total - done}: revisá la lista y probá de nuevo.`);
+        this.name = "PartialBatchError";
+    }
+}
+
+// Aplica la acción a cada id. Si fallan todos, lanza el primer error (con su status);
+// si falla una parte, lanza PartialBatchError. Así nunca se informa un éxito falso.
+async function runForEach(ids: string[], action: (id: string) => Promise<unknown>): Promise<void> {
+    const results = await Promise.allSettled(ids.map(action));
+    const failures = results.filter((result): result is PromiseRejectedResult => result.status === "rejected");
+    if (failures.length === 0) return;
+    if (failures.length === results.length) throw failures[0].reason;
+    throw new PartialBatchError(results.length - failures.length, results.length);
+}
 
 export const userKeys = {
     all: (institutionId: string) => ["users", institutionId] as const,
     list: (institutionId: string, filters: UserFilters) => ["users", institutionId, "list", filters] as const,
     counts: (institutionId: string) => ["users", institutionId, "counts"] as const,
+    activeAdmins: (institutionId: string) => ["users", institutionId, "active-admins"] as const,
 };
 
 function useInvalidate() {
@@ -40,6 +60,18 @@ export function useUserCounts() {
     });
 }
 
+// Cantidad real de administradores activos de la escuela (no solo los de la página visible):
+// GET /users?role=admin&status=active → total. null mientras carga o si falla.
+export function useActiveAdminCount() {
+    const institutionId = useInstitutionId();
+    const query = useQuery({
+        queryKey: userKeys.activeAdmins(institutionId),
+        queryFn: async () =>
+            parsed(parseUserPage(await apiFetch<unknown>(usersListPath({ ...DEFAULT_USER_FILTERS, role: "admin", status: "active" })))).total,
+    });
+    return query.data ?? null;
+}
+
 // Alta: POST /users. Edición de datos: PATCH /users/:id
 export function useSaveUser() {
     const invalidate = useInvalidate();
@@ -49,7 +81,8 @@ export function useSaveUser() {
             await apiFetch<unknown>(userPath(user.userId), json("PATCH", toUpdateUserBody(values)));
             if (values.role !== user.role) await apiFetch<unknown>(membershipPath(user.membershipId), json("PATCH", { role: values.role }));
         },
-        onSuccess: invalidate,
+        // También si falla el cambio de rol: los datos personales ya se guardaron
+        onSettled: invalidate,
     });
 }
 
@@ -57,10 +90,10 @@ export function useSaveUser() {
 export function useChangeRole() {
     const invalidate = useInvalidate();
     return useMutation({
-        mutationFn: async ({ ids, role }: { ids: string[]; role: Role }) => {
-            for (const id of ids) await apiFetch<unknown>(membershipPath(id), json("PATCH", { role }));
-        },
-        onSuccess: invalidate,
+        mutationFn: ({ ids, role }: { ids: string[]; role: Role }) =>
+            runForEach(ids, (id) => apiFetch<unknown>(membershipPath(id), json("PATCH", { role }))),
+        // También si falla: una parte pudo haberse aplicado
+        onSettled: invalidate,
     });
 }
 
@@ -68,19 +101,18 @@ export function useChangeRole() {
 export function useSetActive() {
     const invalidate = useInvalidate();
     return useMutation({
-        mutationFn: async ({ ids, active }: { ids: string[]; active: boolean }) => {
-            for (const id of ids) await apiFetch<unknown>(active ? reactivatePath(id) : membershipPath(id), { method: active ? "POST" : "DELETE" });
-        },
-        onSuccess: invalidate,
+        mutationFn: ({ ids, active }: { ids: string[]; active: boolean }) =>
+            runForEach(ids, (id) => apiFetch<unknown>(active ? reactivatePath(id) : membershipPath(id), { method: active ? "POST" : "DELETE" })),
+        // También si falla: una parte pudo haberse aplicado
+        onSettled: invalidate,
     });
 }
 
 // Pedido a Back: POST /users/:id/reset-password
 export function useResetPassword() {
     return useMutation({
-        mutationFn: async (userIds: string[]) => {
-            for (const id of userIds) await apiFetch<unknown>(resetPasswordPath(id), { method: "POST" });
-        },
+        mutationFn: (userIds: string[]) =>
+            runForEach(userIds, (id) => apiFetch<unknown>(resetPasswordPath(id), { method: "POST" })),
     });
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useSession } from "@/features/session/use-session";
 import { apiFetch } from "@/lib/api";
 import { coursesPathFor, sheetPath } from "./attendance-api";
@@ -14,10 +14,10 @@ export type CoursesState =
     | { status: "error"; message: string }
     | { status: "ready"; courses: AttendanceCourse[] };
 
-// Resultado de pedir los cursos (path = de cuál de las dos rutas)
+// Resultado de pedir los cursos (key = de qué membresía, ruta e intento)
 type CoursesResult =
-    | { path: string; status: "ready"; courses: AttendanceCourse[] }
-    | { path: string; status: "error"; message: string };
+    | { key: string; status: "ready"; courses: AttendanceCourse[] }
+    | { key: string; status: "error"; message: string };
 
 // Resultado de pedir la planilla de un curso y una fecha (key = cuál de las dos)
 type SheetResult =
@@ -45,31 +45,57 @@ export function useAttendanceData() {
     const { active } = useSession();
     const coursesPath = coursesPathFor(active.role);
 
-    // "Hoy" con hora de Argentina; se calcula una sola vez al abrir la pantalla
-    const [today] = useState(() => todayInArgentina());
+    // "Hoy" con hora de Argentina. Se vuelve a calcular al volver a la pestaña:
+    // si quedó abierta pasada la medianoche, el día nuevo no queda como "fecha futura".
+    // Fecha elegida (null = hoy)
+    const [dateChoice, setDateChoice] = useState<string | null>(null);
+    const [today, setToday] = useState(() => todayInArgentina());
+    const todayRef = useRef(today);
+    useEffect(() => {
+        function refreshToday() {
+            if (document.visibilityState !== "visible") return;
+            const next = todayInArgentina();
+            if (next === todayRef.current) return;
+            // La planilla abierta sigue en el día que se estaba mirando (con sus cambios);
+            // "Ir a hoy" lleva al día nuevo
+            const previous = todayRef.current;
+            todayRef.current = next;
+            setDateChoice((current) => current ?? previous);
+            setToday(next);
+        }
+        document.addEventListener("visibilitychange", refreshToday);
+        window.addEventListener("focus", refreshToday);
+        return () => {
+            document.removeEventListener("visibilitychange", refreshToday);
+            window.removeEventListener("focus", refreshToday);
+        };
+    }, []);
 
     const [coursesResult, setCoursesResult] = useState<CoursesResult | null>(null);
     const [coursesAttempt, setCoursesAttempt] = useState(0);
+    // Al cambiar de escuela es otro pedido: no se muestran cursos de la anterior
+    const coursesKey = coursesPath ? `${active.id}:${coursesPath}:${coursesAttempt}` : null;
 
     // Lo que se eligió (null = no eligió nada: primer curso / hoy)
     const [courseChoice, setCourseChoice] = useState<string | null>(null);
-    const [dateChoice, setDateChoice] = useState<string | null>(null);
 
     const [sheetResult, setSheetResult] = useState<SheetResult | null>(null);
     const [sheetAttempt, setSheetAttempt] = useState(0);
 
     // GET /me/courses (docente) o GET /courses (admin y director)
     useEffect(() => {
-        if (!coursesPath) return;
+        if (!coursesPath || !coursesKey) return;
         let cancelled = false;
         apiFetch<AttendanceCourse[]>(coursesPath)
             .then((courses) => {
-                if (!cancelled) setCoursesResult({ path: coursesPath, status: "ready", courses });
+                if (!cancelled) {
+                    setCoursesResult({ key: coursesKey, status: "ready", courses: Array.isArray(courses) ? courses : [] });
+                }
             })
             .catch((error: unknown) => {
                 if (cancelled) return;
                 setCoursesResult({
-                    path: coursesPath,
+                    key: coursesKey,
                     status: "error",
                     message: toMessage(error, "No pudimos cargar tus cursos."),
                 });
@@ -77,13 +103,13 @@ export function useAttendanceData() {
         return () => {
             cancelled = true;
         };
-    }, [coursesPath, coursesAttempt]);
+    }, [coursesPath, coursesKey]);
 
     // Estado de los cursos: si lo guardado es de otra ruta, está cargando
     let catalog: CoursesState;
     if (!coursesPath) {
         catalog = { status: "unsupported" };
-    } else if (coursesResult?.path === coursesPath) {
+    } else if (coursesResult?.key === coursesKey) {
         catalog =
             coursesResult.status === "ready"
                 ? { status: "ready", courses: coursesResult.courses }
@@ -113,7 +139,7 @@ export function useAttendanceData() {
         let cancelled = false;
         apiFetch<AttendanceRow[]>(sheetPath(courseId, date))
             .then((rows) => {
-                if (!cancelled) setSheetResult({ key, status: "ready", rows });
+                if (!cancelled) setSheetResult({ key, status: "ready", rows: Array.isArray(rows) ? rows : [] });
             })
             .catch((error: unknown) => {
                 if (cancelled) return;
@@ -143,7 +169,6 @@ export function useAttendanceData() {
     }
 
     const retryCourses = useCallback(() => {
-        setCoursesResult(null);
         setCoursesAttempt((value) => value + 1);
     }, []);
 

@@ -5,7 +5,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { ApiError, apiFetch, setActiveInstitutionId } from "@/lib/api";
-import { signOut } from "@/lib/supabase/sign-out";
+import { useToast } from "@/components/ui/toast";
+import { reloadToLogin, signOut } from "@/lib/supabase/sign-out";
 import { INSTITUTION_CHANNEL, InstitutionSwitchContext, initialMembership, readRememberedInstitution, rememberInstitution, switchErrorText } from "./institution-switch";
 import type { InstitutionSwitch, SwitchState } from "./institution-switch";
 import { SessionContext } from "./use-session";
@@ -25,6 +26,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     const [switchState, setSwitchState] = useState<SwitchState>({ phase: "idle" });
     const queryClient = useQueryClient();
     const channel = useRef<BroadcastChannel | null>(null);
+    const { showToast } = useToast();
 
     useEffect(() => {
         let cancelled = false;
@@ -63,11 +65,12 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         setAttempt((value) => value + 1);
     }, []);
 
+    // Igual que el "Salir" del header: recarga completa para no dejar estado en memoria
     const handleSignOut = useCallback(async () => {
         await signOut();
         setActiveInstitutionId(null);
-        router.push("/ingresar");
-    }, [router]);
+        reloadToLogin();
+    }, []);
 
     const session = useMemo<Session | null>(() => {
         if (state.status !== "ready") return null;
@@ -76,13 +79,29 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         return active ? { profile, memberships, active } : null;
     }, [state, activeId]);
 
+    // Escuela activa de esta pestaña, para comparar con los avisos de otras pestañas
+    const activeInstitutionRef = useRef<{ institutionId: string; name: string } | null>(null);
+    useEffect(() => {
+        activeInstitutionRef.current = session
+            ? { institutionId: session.active.institutionId, name: session.active.institutionName }
+            : null;
+    }, [session]);
+
     // Otra pestaña cambió de escuela: avisa y sigue en la suya (SDD 8.6)
     useEffect(() => {
         if (typeof BroadcastChannel === "undefined") return;
         const current = new BroadcastChannel(INSTITUTION_CHANNEL);
         channel.current = current;
+        current.onmessage = (event: MessageEvent<unknown>) => {
+            const data = event.data as { institutionId?: unknown } | null;
+            const mine = activeInstitutionRef.current;
+            if (!mine || typeof data?.institutionId !== "string") return;
+            if (data.institutionId !== mine.institutionId) {
+                showToast(`Cambiaste de escuela en otra pestaña. En esta seguís en ${mine.name}.`);
+            }
+        };
         return () => current.close();
-    }, []);
+    }, [showToast]);
 
     // Cambio de contexto institucional (SDD 8.6): verifica acceso con /me, vacía la caché y aplica el rol de la nueva escuela
     const switchTo = useCallback(
