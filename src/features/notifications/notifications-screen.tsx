@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -47,8 +47,12 @@ export function NotificationsScreen() {
     const { showToast } = useToast();
     // Notificación que se pidió eliminar y espera la confirmación
     const [toDelete, setToDelete] = useState<NotificationItem | null>(null);
-    // Hora de referencia para "Hace X minutos"; se toma al abrir la pantalla
-    const [now] = useState(() => new Date());
+    // Hora de referencia para "Hace X minutos": se toma al abrir y se actualiza cada minuto
+    const [now, setNow] = useState(() => new Date());
+    useEffect(() => {
+        const timer = setInterval(() => setNow(new Date()), 60_000);
+        return () => clearInterval(timer);
+    }, []);
 
     // Los errores se avisan con un toast; marcar una con éxito no avisa (ya se ve en la tarjeta)
     const notifyError = useCallback(

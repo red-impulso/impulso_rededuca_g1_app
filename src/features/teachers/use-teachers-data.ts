@@ -163,6 +163,7 @@ export function useSaveAssignments(courseId: string) {
                 for (const item of assignments) await apiFetch<unknown>(subjectTeacherPath(item.subjectId), json("PUT", { teacherMembershipId: item.teacherMembershipId }));
             }
         },
-        onSuccess: invalidate,
+        // También si falla: el plan B por materia puede haber guardado una parte
+        onSettled: invalidate,
     });
 }

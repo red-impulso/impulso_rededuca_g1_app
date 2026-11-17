@@ -233,7 +233,7 @@ export function AttendanceSheet() {
                         requestChange(() => handleCourseChange(courseId));
                     }}
                     disabled={saving}
-                    className={CONTROL_STYLES}
+                    className={`${CONTROL_STYLES} w-full max-w-full sm:w-auto`}
                 >
                     {courses.map((item) => (
                         <option key={item.id} value={item.id}>
@@ -252,7 +252,7 @@ export function AttendanceSheet() {
                         requestChange(() => handleDateChange(value));
                     }}
                     disabled={saving}
-                    className={CONTROL_STYLES}
+                    className={`${CONTROL_STYLES} w-full max-w-full sm:w-auto`}
                 />
 
                 {date !== today && (

@@ -71,6 +71,8 @@ export function changeRoleText(role: string, school: string): string {
     return `Tendrá acceso a datos y acciones de ${role.toLocaleLowerCase("es")} en ${school}.`;
 }
 export const LAST_ADMIN_TITLE = "No podés desactivar al último administrador";
+// Nadie se cambia el rol ni se da de baja a sí mismo desde esta pantalla
+export const SELF_CHANGE_TEXT = "No podés cambiar tu propio rol ni darte de baja. Pedíselo a otra persona administradora.";
 export const LAST_ADMIN_TEXT = "Asigná a otra persona como administrador de la escuela y después volvé a intentar.";
 export const DETAIL_TITLE = "Detalle de usuario";
 export const DETAIL_SECTIONS = { general: "Datos generales", access: "Datos de acceso", permissions: "Permisos" } as const;

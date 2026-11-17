@@ -7,19 +7,15 @@ import {
 } from "@/features/home/sample-data";
 import type { HomeListItem, HomeStat } from "@/features/home/sample-data";
 
+export type QuickLink = { label: string; href: string };
+
 type HomeDashboardProps = {
   userName: string;
   // Rol e institución con los que trabaja la persona (por ejemplo "Docente · Escuela Demo")
   context?: string;
+  // Accesos del rol (los mismos ítems del menú): nadie ve accesos a pantallas que no son suyas
+  quickLinks?: QuickLink[];
 };
-
-// Accesos del Inicio: si cambia una ruta, se cambia acá
-const QUICK_LINKS = [
-  { label: "Ver mensajes", href: "/mensajes" },
-  { label: "Ver asistencia", href: "/asistencia" },
-  { label: "Ver calificaciones", href: "/calificaciones" },
-  { label: "Ver agenda", href: "/agenda" },
-];
 
 const TONE_CLASSES: Record<HomeStat["tone"], string> = {
   success: "text-success",
@@ -59,7 +55,7 @@ function ListCard({ title, items }: { title: string; items: HomeListItem[] }) {
 }
 
 // Pantalla de Inicio: saludo, resumen, accesos y tres listas
-export function HomeDashboard({ userName, context }: HomeDashboardProps) {
+export function HomeDashboard({ userName, context, quickLinks = [] }: HomeDashboardProps) {
   return (
     <div className="flex flex-col gap-6">
       <div>
@@ -68,23 +64,30 @@ export function HomeDashboard({ userName, context }: HomeDashboardProps) {
         {context && <p className="mt-1 text-sm text-muted">{context}</p>}
       </div>
 
-      <section aria-label="Resumen" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      {/* Los números y las listas todavía no vienen de Back: se avisa para que nadie los tome por reales */}
+      <p className="rounded-lg bg-warning-bg px-4 py-3 text-sm text-warning">
+        Vista de ejemplo: estos números y listas son ilustrativos y todavía no muestran los datos de tu escuela.
+      </p>
+
+      <section aria-label="Resumen (ejemplo)" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {sampleStats.map((stat) => (
           <StatCard key={stat.label} stat={stat} />
         ))}
       </section>
 
-      <nav aria-label="Accesos" className="flex flex-wrap gap-3">
-        {QUICK_LINKS.map((link) => (
-          <Link
-            key={link.href}
-            href={link.href}
-            className="rounded-xl border border-line bg-surface px-4 py-2.5 text-sm font-semibold text-brand hover:border-brand"
-          >
-            {link.label}
-          </Link>
-        ))}
-      </nav>
+      {quickLinks.length > 0 && (
+        <nav aria-label="Accesos" className="flex flex-wrap gap-3">
+          {quickLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="inline-flex min-h-11 items-center rounded-xl border border-line bg-surface px-4 text-sm font-semibold text-brand hover:border-brand"
+            >
+              {link.label}
+            </Link>
+          ))}
+        </nav>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-3">
         <ListCard title="Comunicados recientes" items={sampleAnnouncements} />

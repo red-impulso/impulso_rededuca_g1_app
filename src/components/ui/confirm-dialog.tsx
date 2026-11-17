@@ -61,14 +61,15 @@ export function ConfirmDialog({
       ref={dialogRef}
       aria-labelledby={titleId}
       onCancel={(event) => {
-        // Escape: dejamos que decida el componente padre
+        // Escape: dejamos que decida el componente padre (mientras carga no se cierra)
         event.preventDefault();
+        if (loading) return;
         closedByPointer.current = false;
         onCancel();
       }}
       onClick={(event) => {
-        // Clic en el fondo oscuro: cancela
-        if (event.target === dialogRef.current) {
+        // Clic en el fondo oscuro: cancela (mientras carga no se cierra)
+        if (event.target === dialogRef.current && !loading) {
           markPointer(event);
           onCancel();
         }

@@ -10,6 +10,7 @@ import { ErrorState } from "@/components/ui/error-state";
 import { SkeletonLines } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast";
 import { useSession } from "@/features/session/use-session";
+import { openPendingTab } from "@/lib/pending-tab";
 import { canManageSchool, courseLabel } from "../school/school-rules";
 import { CLEAR_FILTERS_LABEL, FILTERS_LABEL, FORBIDDEN_TEXT, SHIFT_LABELS } from "../school/school-texts";
 import { errorInfo, useCourses, useSubjects } from "../school/use-school-data";
@@ -123,11 +124,18 @@ function TeachersContent() {
     const rows = teachers.data?.data ?? [];
     const close = () => setDialog({ type: "none" });
 
-    const runExport = () =>
+    // La pestaña se abre en el mismo clic (si no, el navegador la bloquea) y recibe la dirección después
+    const runExport = () => {
+        if (exportTeachers.isPending) return;
+        const tab = openPendingTab();
         exportTeachers.mutate(selected, {
-            onSuccess: (url) => window.open(url, "_blank", "noopener"),
-            onError: (error) => showToast(`${EXPORT_ERROR_TEXT} ${errorInfo(error, "").message}`.trim()),
+            onSuccess: (url) => tab.open(url),
+            onError: (error) => {
+                tab.close();
+                showToast(`${EXPORT_ERROR_TEXT} ${errorInfo(error, "").message}`.trim());
+            },
         });
+    };
 
     let content: ReactNode;
     if (teachers.isPending) {
@@ -211,7 +219,7 @@ function TeachersContent() {
             <div className="flex flex-col gap-4 pb-20 lg:pb-0">
                 <Filters filters={filters} onChange={setFilters} />
                 {selected.length > 0 && (
-                    <div role="region" aria-label="Acciones en lote" className="flex flex-wrap items-center gap-2 rounded-2xl border border-blue bg-[#E8EEF9] p-3">
+                    <div role="region" aria-label="Acciones en lote" className="flex flex-wrap items-center gap-2 rounded-2xl border border-blue bg-blue/10 p-3">
                         <span className="text-sm font-semibold text-ink">{selectedText(selected.length)}</span>
                         <button type="button" onClick={runExport} className={SECONDARY}>{EXPORT_LABEL}</button>
                         <label htmlFor="docentes-lote-estado" className="sr-only">{CHANGE_STATUS_LABEL}</label>

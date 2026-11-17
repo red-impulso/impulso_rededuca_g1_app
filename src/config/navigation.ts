@@ -18,9 +18,11 @@ export const navItems: NavItem[] = [
     { label: "Materias", href: "/materias", roles: ["admin", "director"] },
     { label: "Usuarios", href: "/usuarios", roles: ["admin"] },
     { label: "Interesados", href: "/interesados", roles: ["admin"] },
+    // Sección en construcción: muestra "Próximamente"
     { label: "Mis cursos", href: "/mis-cursos", roles: ["teacher"] },
     { label: "Mis hijos", href: "/hijos", roles: ["guardian"] },
-    { label: "Calificaciones", href: "/calificaciones", roles: ["admin", "director", "teacher"] },
+    // Solo el docente carga notas (Back responde /me/subjects únicamente a ese rol)
+    { label: "Calificaciones", href: "/calificaciones", roles: ["teacher"] },
     { label: "Asistencia", href: "/asistencia", roles: ["admin", "director", "teacher"] },
     { label: "Avisos", href: "/comunicados", roles: ["admin", "director", "teacher", "guardian"] },
 ];

@@ -358,7 +358,7 @@ export function GradesSheet() {
                         requestChange(() => handleSubjectChange(subjectId));
                     }}
                     disabled={saving}
-                    className={CONTROL_STYLES}
+                    className={`${CONTROL_STYLES} w-full max-w-full sm:w-auto`}
                 >
                     {subjects.map((item) => (
                         <option key={item.id} value={item.id}>
@@ -375,7 +375,7 @@ export function GradesSheet() {
                         requestChange(() => handlePeriodChange(periodId));
                     }}
                     disabled={saving}
-                    className={CONTROL_STYLES}
+                    className={`${CONTROL_STYLES} w-full max-w-full sm:w-auto`}
                 >
                     {periods.map((item) => (
                         <option key={item.id} value={item.id}>

@@ -22,7 +22,21 @@ describe("getNavItems", () => {
     it("el docente no ve ítems solo de tutores", () => {
         const labels = getNavItems("teacher").map((item) => item.label);
         expect(labels).toContain("Mis cursos");
+        expect(labels).toContain("Calificaciones");
         expect(labels).not.toContain("Mis hijos");
+    });
+
+    it("solo el docente ve Mis cursos, que lleva a /mis-cursos", () => {
+        expect(getNavItems("teacher").map((item) => item.href)).toContain("/mis-cursos");
+        for (const role of ["admin", "director", "guardian"] as const) {
+            expect(getNavItems(role).map((item) => item.href)).not.toContain("/mis-cursos");
+        }
+    });
+
+    it("Calificaciones es solo para el docente", () => {
+        for (const role of ["admin", "director", "guardian"] as const) {
+            expect(getNavItems(role).map((item) => item.href)).not.toContain("/calificaciones");
+        }
     });
 
     it("todos los roles ven Inicio", () => {

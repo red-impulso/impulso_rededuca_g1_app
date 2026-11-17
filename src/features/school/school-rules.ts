@@ -1,5 +1,5 @@
 import type { Role } from "../session/types";
-import { EMPTY_VALUE, NO_TEACHER_TEXT, SHIFT_LABELS, STATUS_LABELS } from "./school-texts";
+import { EMPTY_VALUE, LOGO_ACCEPTED_TYPES, LOGO_INVALID_TYPE_TEXT, LOGO_MAX_BYTES, LOGO_TOO_BIG_TEXT, NO_TEACHER_TEXT, SHIFT_LABELS, STATUS_LABELS } from "./school-texts";
 import type {
     Course,
     CourseAssignment,
@@ -376,4 +376,11 @@ export function hasCourseFilters(filters: CourseFilters): boolean {
 
 export function hasSubjectFilters(filters: SubjectFilters): boolean {
     return subjectFiltersQuery(filters) !== "";
+}
+
+// Valida el archivo del logo antes de subirlo; devuelve el texto del error o null si está bien
+export function logoFileError(file: { type: string; size: number }): string | null {
+    if (!(LOGO_ACCEPTED_TYPES as readonly string[]).includes(file.type)) return LOGO_INVALID_TYPE_TEXT;
+    if (file.size > LOGO_MAX_BYTES) return LOGO_TOO_BIG_TEXT;
+    return null;
 }

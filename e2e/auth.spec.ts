@@ -16,6 +16,13 @@ test("visitar / sin sesión termina en /ingresar", async ({ page }) => {
     await page.goto("/");
     await expect(page).toHaveURL(/\/ingresar$/);
 });
+
+test("/nueva-contrasena es pública y sin enlace válido pide otro", async ({ page }) => {
+    await page.goto("/nueva-contrasena");
+    await expect(page).toHaveURL(/\/nueva-contrasena$/);
+    await expect(page.getByRole("link", { name: "Pedir otro enlace" })).toBeVisible();
+    await expect(page.getByRole("contentinfo")).toHaveText(FOOTER_TEXT);
+});
 });
 
 test.describe("/ingresar", () => {

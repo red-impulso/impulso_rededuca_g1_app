@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
+import { reloadToLogin, signOut } from "@/lib/supabase/sign-out";
 
 // Next solo reemplaza las variables públicas si se escriben completas
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -66,9 +67,28 @@ export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> 
     }
 
     if (!response.ok) {
+        if (response.status === 401) handleUnauthorized();
         throw new ApiError(response.status, await readErrorMessage(response));
     }
-    // 204 Sin contenido
+    // 204 Sin contenido, o 2xx con cuerpo vacío
     if (response.status === 204) return undefined as T;
-    return (await response.json()) as T;
+    const text = await response.text();
+    if (!text.trim()) return undefined as T;
+    try {
+        return JSON.parse(text) as T;
+    } catch {
+        throw new ApiError(response.status, "Respuesta inesperada del servidor.");
+    }
+}
+
+// Sesión vencida o cerrada en otra pestaña: se cierra la de este navegador y se vuelve a
+// /ingresar una sola vez, aunque fallen varios pedidos a la vez
+let redirectingToLogin = false;
+
+function handleUnauthorized(): void {
+    if (typeof window === "undefined" || redirectingToLogin) return;
+    if (window.location.pathname.startsWith("/ingresar")) return;
+    redirectingToLogin = true;
+    setActiveInstitutionId(null);
+    void signOut().finally(reloadToLogin);
 }

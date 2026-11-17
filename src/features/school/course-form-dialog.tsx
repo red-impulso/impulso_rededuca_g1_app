@@ -49,7 +49,7 @@ function CourseForm({ course, courses, defaultSchoolYear, onCancel, onSaved }: O
     const {
         register,
         handleSubmit,
-        formState: { errors },
+        formState: { errors, isSubmitting },
     } = useForm<CourseFormValues>({
         resolver: zodResolver(makeCourseSchema(courses, course?.id ?? null)),
         defaultValues: courseToValues(course, defaultSchoolYear),
@@ -66,11 +66,14 @@ function CourseForm({ course, courses, defaultSchoolYear, onCancel, onSaved }: O
         teacherOptions.push({ value: course.homeroomTeacher.id, label: course.homeroomTeacher.fullName ?? "—" });
     }
 
-    const submit = handleSubmit((values) => {
-        save.mutate(
-            { id: course?.id ?? null, values },
-            { onSuccess: (saved) => onSaved(saved, course === null) },
-        );
+    // mutateAsync: isSubmitting sigue en true hasta que responde Back (un doble toque no envía dos veces)
+    const submit = handleSubmit(async (values) => {
+        try {
+            const saved = await save.mutateAsync({ id: course?.id ?? null, values });
+            onSaved(saved, course === null);
+        } catch {
+            // El error se muestra con save.error
+        }
     });
 
     const saveError = save.isError ? errorInfo(save.error, SAVE_ERROR_TEXT) : null;
@@ -141,13 +144,13 @@ function CourseForm({ course, courses, defaultSchoolYear, onCancel, onSaved }: O
                 <button
                     type="button"
                     onClick={onCancel}
-                    disabled={save.isPending}
+                    disabled={isSubmitting || save.isPending}
                     className={`${BUTTON_STYLES} border border-line bg-surface text-ink hover:bg-page`}
                 >
                     {CANCEL_LABEL}
                 </button>
-                <button type="submit" disabled={save.isPending} className={`${BUTTON_STYLES} bg-blue text-white hover:bg-blue/90`}>
-                    {save.isPending ? SAVING_LABEL : SAVE_LABEL}
+                <button type="submit" disabled={isSubmitting || save.isPending} className={`${BUTTON_STYLES} bg-blue text-white hover:bg-blue/90`}>
+                    {isSubmitting || save.isPending ? SAVING_LABEL : SAVE_LABEL}
                 </button>
             </div>
         </form>

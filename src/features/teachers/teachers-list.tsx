@@ -29,7 +29,7 @@ function assignHref(teacher: TeacherSummary): string {
 
 export function TeacherAvatar({ name, size = "sm" }: { name: string; size?: "sm" | "lg" }) {
     return (
-        <span aria-hidden="true" className={`flex shrink-0 items-center justify-center rounded-full bg-[#E8EEF9] font-semibold text-blue ${size === "lg" ? "h-14 w-14 text-xl" : "h-9 w-9 text-sm"}`}>
+        <span aria-hidden="true" className={`flex shrink-0 items-center justify-center rounded-full bg-blue/10 font-semibold text-blue ${size === "lg" ? "h-14 w-14 text-xl" : "h-9 w-9 text-sm"}`}>
             {teacherInitials(name)}
         </span>
     );
@@ -42,7 +42,7 @@ export function TeachersList({ teachers, selected, onToggle, onToggleAll, onEdit
         <>
             <div className="hidden overflow-x-auto rounded-2xl border border-line bg-surface lg:block">
                 <table className="w-full text-left text-sm">
-                    <thead className="bg-[#F1F5F9] text-xs font-semibold text-muted">
+                    <thead className="bg-page text-xs font-semibold text-muted">
                         <tr>
                             <th scope="col" className="w-12 px-4 py-3">
                                 <input type="checkbox" className={CHECK} checked={allSelected} onChange={onToggleAll} aria-label="Seleccionar todos" />
@@ -54,7 +54,7 @@ export function TeachersList({ teachers, selected, onToggle, onToggleAll, onEdit
                     </thead>
                     <tbody>
                         {teachers.map((teacher) => (
-                            <tr key={teacher.id} className={`border-t border-line ${selected.includes(teacher.id) ? "bg-[#E8EEF9]/50" : ""}`}>
+                            <tr key={teacher.id} className={`border-t border-line ${selected.includes(teacher.id) ? "bg-blue/5" : ""}`}>
                                 <td className="px-4 py-2">
                                     <input type="checkbox" className={CHECK} checked={selected.includes(teacher.id)} onChange={() => onToggle(teacher.id)} aria-label={`Seleccionar a ${teacher.fullName}`} />
                                 </td>

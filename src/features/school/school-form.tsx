@@ -136,7 +136,7 @@ export function SchoolForm({
         control,
         handleSubmit,
         reset,
-        formState: { errors, isDirty },
+        formState: { errors, isDirty, isSubmitting },
     } = useForm<SchoolFormValues>({
         resolver: zodResolver(schoolSchema),
         defaultValues: savedValues,
@@ -162,6 +162,8 @@ export function SchoolForm({
         if (await onSave(values)) reset(values);
     }, handleInvalid);
 
+    // Ocupado desde el primer clic (isSubmitting) hasta que responde Back (saving)
+    const busy = saving || isSubmitting;
     const restore = () => reset(savedValues);
     const yearOptions = schoolYearOptions(now, school.schoolYear).map((year) => ({ value: String(year), label: String(year) }));
 
@@ -172,7 +174,7 @@ export function SchoolForm({
                     <button
                         type="button"
                         onClick={restore}
-                        disabled={!isDirty || saving}
+                        disabled={!isDirty || busy}
                         className={`${BUTTON_STYLES} hidden border border-line bg-surface text-ink hover:bg-page lg:inline-flex lg:items-center`}
                     >
                         {RESTORE_LABEL}
@@ -335,7 +337,7 @@ export function SchoolForm({
                                         onChange={field.onChange}
                                         onText={SWITCH_ON}
                                         offText={SWITCH_OFF}
-                                        disabled={saving}
+                                        disabled={busy}
                                     />
                                 )}
                             />
@@ -350,7 +352,7 @@ export function SchoolForm({
                                         onChange={field.onChange}
                                         onText={SWITCH_ON}
                                         offText={SWITCH_OFF}
-                                        disabled={saving}
+                                        disabled={busy}
                                     />
                                 )}
                             />
@@ -360,7 +362,7 @@ export function SchoolForm({
                         <button
                             type="button"
                             onClick={restore}
-                            disabled={!isDirty || saving}
+                            disabled={!isDirty || busy}
                             className="mx-auto min-h-11 px-3 font-semibold text-blue underline-offset-4 outline-blue/40 hover:underline focus-visible:outline-3 disabled:text-muted lg:hidden"
                         >
                             {RESTORE_LABEL}
@@ -373,17 +375,17 @@ export function SchoolForm({
                     <button
                         type="button"
                         onClick={() => onCancel(isDirty)}
-                        disabled={saving}
+                        disabled={busy}
                         className={`${BUTTON_STYLES} flex-1 border border-line bg-surface text-ink hover:bg-page lg:flex-none`}
                     >
                         {CANCEL_LABEL}
                     </button>
                     <button
                         type="submit"
-                        disabled={saving}
+                        disabled={busy}
                         className={`${BUTTON_STYLES} flex-[2] bg-blue text-white hover:bg-blue/90 lg:flex-none`}
                     >
-                        {saving ? SAVING_LABEL : SAVE_LABEL}
+                        {busy ? SAVING_LABEL : SAVE_LABEL}
                     </button>
                 </div>
             </form>

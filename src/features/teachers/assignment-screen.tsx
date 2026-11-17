@@ -9,6 +9,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { SkeletonLines } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast";
+import { useUnsavedChangesGuard } from "@/lib/use-unsaved-changes-guard";
 import { useSession } from "@/features/session/use-session";
 import { canManageSchool, courseLabel } from "../school/school-rules";
 import { EMPTY_VALUE, FORBIDDEN_TEXT, SHIFT_LABELS } from "../school/school-texts";
@@ -53,16 +54,27 @@ function RowStatus({ row }: { row: Row }) {
     return row.teacher ? <span className="text-sm font-semibold text-success">✓ {ROW_STATUS.assigned}</span> : <span className="text-sm font-semibold text-error">! {ROW_STATUS.unassigned}</span>;
 }
 
-function RowActions({ row, onAssign, onRemove }: { row: Row; onAssign: () => void; onRemove: () => void }) {
+function RowActions({ row, disabled, onAssign, onRemove }: { row: Row; disabled: boolean; onAssign: () => void; onRemove: () => void }) {
     return (
         <div className="flex flex-wrap justify-end">
-            <button type="button" onClick={onAssign} className={LINK}>{row.teacher ? CHANGE_TEACHER_LABEL : ASSIGN_TEACHER_LABEL}</button>
-            {row.teacher && <button type="button" onClick={onRemove} className={`${LINK} text-error`}>Quitar</button>}
+            <button type="button" onClick={onAssign} disabled={disabled} className={`${LINK} disabled:opacity-60`}>{row.teacher ? CHANGE_TEACHER_LABEL : ASSIGN_TEACHER_LABEL}</button>
+            {row.teacher && <button type="button" onClick={onRemove} disabled={disabled} className={`${LINK} text-error disabled:opacity-60`}>Quitar</button>}
         </div>
     );
 }
 
-function CourseAssignments({ courseId, courseName, preselected }: { courseId: string; courseName: string; preselected: string | null }) {
+function CourseAssignments({
+    courseId,
+    courseName,
+    preselected,
+    onPendingChange,
+}: {
+    courseId: string;
+    courseName: string;
+    preselected: string | null;
+    // Avisa cuántos cambios sin guardar hay (la pantalla pregunta antes de cambiar de curso)
+    onPendingChange: (count: number) => void;
+}) {
     const { showToast } = useToast();
     const rowsQuery = useCourseAssignmentRows(courseId);
     const save = useSaveAssignments(courseId);
@@ -75,17 +87,26 @@ function CourseAssignments({ courseId, courseName, preselected }: { courseId: st
     const base = rowsQuery.data;
     if (base.length === 0) return <EmptyState title={NO_COURSE_SUBJECTS_TEXT} action={<Link href="/materias" className={SECONDARY}>{CONFIGURE_PLAN_LABEL}</Link>} />;
 
+    // Cambia lo pendiente y avisa a la pantalla cuántos cambios quedan sin guardar
+    const updateChanges = (next: PendingChanges) => {
+        setChanges(next);
+        onPendingChange(changedCount(base, next));
+    };
+
     const rows = applyChanges(base, changes);
     const summary = assignmentSummary(rows);
     const pending = changedCount(base, changes);
     const pickingRow = rows.find((row) => row.subjectId === picking) ?? null;
-    const submit = () =>
+    const saving = save.isPending;
+    const submit = () => {
+        if (saving) return;
         save.mutate(changes, {
             onSuccess: () => {
-                setChanges({});
+                updateChanges({});
                 showToast(ASSIGNMENTS_SAVED_TEXT);
             },
         });
+    };
 
     return (
         <div className="flex flex-col gap-4 pb-24 lg:pb-0">
@@ -105,7 +126,7 @@ function CourseAssignments({ courseId, courseName, preselected }: { courseId: st
             </dl>
             <div className="hidden overflow-x-auto rounded-2xl border border-line bg-surface lg:block">
                 <table className="w-full text-left text-sm">
-                    <thead className="bg-[#F1F5F9] text-xs font-semibold text-muted">
+                    <thead className="bg-page text-xs font-semibold text-muted">
                         <tr>{Object.entries(ASSIGNMENT_COLUMNS).map(([key, label]) => <th key={key} scope="col" className={`px-4 py-3 ${key === "actions" ? "text-right" : ""}`}>{label}</th>)}</tr>
                     </thead>
                     <tbody>
@@ -115,7 +136,7 @@ function CourseAssignments({ courseId, courseName, preselected }: { courseId: st
                                 <td className="px-4 py-2 text-ink">{row.weeklyHours} hs</td>
                                 <td className="px-4 py-2 text-ink">{row.teacher?.fullName ?? EMPTY_VALUE}</td>
                                 <td className="px-4 py-2"><RowStatus row={row} /></td>
-                                <td className="px-2 py-1"><RowActions row={row} onAssign={() => setPicking(row.subjectId)} onRemove={() => setRemoving(row)} /></td>
+                                <td className="px-2 py-1"><RowActions row={row} disabled={saving} onAssign={() => setPicking(row.subjectId)} onRemove={() => setRemoving(row)} /></td>
                             </tr>
                         ))}
                     </tbody>
@@ -131,23 +152,23 @@ function CourseAssignments({ courseId, courseName, preselected }: { courseId: st
                             </div>
                             <RowStatus row={row} />
                         </div>
-                        <RowActions row={row} onAssign={() => setPicking(row.subjectId)} onRemove={() => setRemoving(row)} />
+                        <RowActions row={row} disabled={saving} onAssign={() => setPicking(row.subjectId)} onRemove={() => setRemoving(row)} />
                     </li>
                 ))}
             </ul>
             {save.isError && (
                 <div role="alert" className="flex flex-wrap items-center gap-2 rounded-[10px] bg-error-bg px-4 py-3 text-sm text-error">
                     <span>{ASSIGNMENTS_ERROR_TEXT} {errorInfo(save.error, "").message}</span>
-                    <button type="button" onClick={submit} className="font-semibold underline">{RETRY_LABEL}</button>
-                    <button type="button" onClick={() => { setChanges({}); save.reset(); }} className="font-semibold underline">{DISCARD_LABEL}</button>
+                    <button type="button" onClick={submit} disabled={saving} className="min-h-11 font-semibold underline disabled:opacity-60">{RETRY_LABEL}</button>
+                    <button type="button" onClick={() => { updateChanges({}); save.reset(); }} disabled={saving} className="min-h-11 font-semibold underline disabled:opacity-60">{DISCARD_LABEL}</button>
                 </div>
             )}
             {pending > 0 && (
                 <div className="fixed inset-x-0 bottom-0 z-30 flex flex-wrap items-center justify-between gap-2 border-t border-line bg-surface p-3 lg:static lg:rounded-2xl lg:border">
                     <span className="text-sm font-semibold text-ink">{pendingChangesText(pending)}</span>
                     <div className="flex gap-2">
-                        <button type="button" onClick={() => setChanges({})} disabled={save.isPending} className={SECONDARY}>{DISCARD_LABEL}</button>
-                        <button type="button" onClick={submit} disabled={save.isPending} className={PRIMARY}>{save.isPending ? "Guardando…" : SAVE_ASSIGNMENTS_LABEL}</button>
+                        <button type="button" onClick={() => updateChanges({})} disabled={saving} className={SECONDARY}>{DISCARD_LABEL}</button>
+                        <button type="button" onClick={submit} disabled={saving} className={PRIMARY}>{saving ? "Guardando…" : SAVE_ASSIGNMENTS_LABEL}</button>
                     </div>
                 </div>
             )}
@@ -157,7 +178,7 @@ function CourseAssignments({ courseId, courseName, preselected }: { courseId: st
                 extraHours={(teacherId) => pendingHoursFor(teacherId, base, changes)}
                 onClose={() => setPicking(null)}
                 onChoose={(candidate) => {
-                    if (pickingRow) setChanges((current) => ({ ...current, [pickingRow.subjectId]: { id: candidate.id, fullName: candidate.fullName } }));
+                    if (pickingRow) updateChanges({ ...changes, [pickingRow.subjectId]: { id: candidate.id, fullName: candidate.fullName } });
                     setPicking(null);
                 }}
             />
@@ -168,7 +189,7 @@ function CourseAssignments({ courseId, courseName, preselected }: { courseId: st
                 destructive
                 onCancel={() => setRemoving(null)}
                 onConfirm={() => {
-                    if (removing) setChanges((current) => ({ ...current, [removing.subjectId]: null }));
+                    if (removing) updateChanges({ ...changes, [removing.subjectId]: null });
                     setRemoving(null);
                 }}
             />
@@ -185,6 +206,14 @@ function AssignmentContent() {
     const subjectId = params.get("materia") || null;
     const [schoolYear, setSchoolYear] = useState("");
     const [shift, setShift] = useState("");
+    // Cambios sin guardar del curso abierto: se pregunta antes de cambiar de curso o de pantalla
+    const [pendingCount, setPendingCount] = useState(0);
+    const [pendingCourse, setPendingCourse] = useState<string | null>(null);
+    const guard = useUnsavedChangesGuard(pendingCount > 0);
+    const goToCourse = (value: string) => {
+        setPendingCount(0);
+        router.replace(value ? `${pathname}?curso=${value}` : pathname, { scroll: false });
+    };
     const list = courses.data ?? [];
     const years = [...new Set(list.map((course) => course.schoolYear).filter((year): year is number => year !== null))].sort();
     const visible = list.filter((course) => (!schoolYear || String(course.schoolYear) === schoolYear) && (!shift || course.shift === shift));
@@ -211,14 +240,56 @@ function AssignmentContent() {
                 </div>
                 <div className="flex flex-col gap-1.5">
                     <label htmlFor="asignacion-curso" className={LABEL_STYLES}>{ASSIGNMENT_SELECTORS.course}</label>
-                    <select id="asignacion-curso" value={courseId ?? ""} onChange={(event) => router.replace(event.target.value ? `${pathname}?curso=${event.target.value}` : pathname, { scroll: false })} className={select} disabled={courses.isPending}>
+                    <select
+                        id="asignacion-curso"
+                        value={courseId ?? ""}
+                        onChange={(event) => {
+                            const value = event.target.value;
+                            if (pendingCount > 0) setPendingCourse(value);
+                            else goToCourse(value);
+                        }}
+                        className={select}
+                        disabled={courses.isPending}
+                    >
                         <option value="">Elegir curso</option>
                         {visible.map((item) => <option key={item.id} value={item.id}>{courseLabel(item)}</option>)}
                     </select>
                 </div>
             </div>
             {courses.isError && <ErrorState message={errorInfo(courses.error, TEACHERS_ERROR_TEXT).message} onRetry={() => void courses.refetch()} />}
-            {courseId ? <CourseAssignments key={courseId} courseId={courseId} courseName={course ? courseLabel(course) : ""} preselected={subjectId} /> : <EmptyState title={CHOOSE_COURSE_TEXT} />}
+            {courseId ? (
+                <CourseAssignments
+                    key={courseId}
+                    courseId={courseId}
+                    courseName={course ? courseLabel(course) : ""}
+                    preselected={subjectId}
+                    onPendingChange={setPendingCount}
+                />
+            ) : (
+                <EmptyState title={CHOOSE_COURSE_TEXT} />
+            )}
+            <ConfirmDialog
+                open={pendingCourse !== null || guard.pendingHref !== null}
+                title="Cambios sin guardar"
+                description={`${pendingChangesText(pendingCount)}. Si salís, se pierden.`}
+                confirmLabel="Salir sin guardar"
+                cancelLabel="Seguir editando"
+                destructive
+                onCancel={() => {
+                    setPendingCourse(null);
+                    guard.stay();
+                }}
+                onConfirm={() => {
+                    if (pendingCourse !== null) {
+                        const value = pendingCourse;
+                        setPendingCourse(null);
+                        goToCourse(value);
+                        return;
+                    }
+                    setPendingCount(0);
+                    guard.leave();
+                }}
+            />
         </>
     );
 }

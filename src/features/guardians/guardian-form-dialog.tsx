@@ -61,7 +61,7 @@ function GuardianForm({ studentId, link, suggestPrimary, onCancel, onSaved }: Om
     const save = useSaveGuardian(studentId);
     const candidates = useGuardianCandidates(search, !editing && mode === "existing");
     const schema = mode === "existing" && !editing ? linkOnlySchema : guardianSchema;
-    const { register, handleSubmit, formState: { errors, dirtyFields } } = useForm<GuardianFormValues>({
+    const { register, handleSubmit, formState: { errors, dirtyFields, isSubmitting } } = useForm<GuardianFormValues>({
         // El esquema depende del modo; el resolver se arma en cada render
         resolver: (values, context, options) => zodResolver(schema as typeof guardianSchema)(values, context, options),
         defaultValues: linkToValues(link),
@@ -69,18 +69,26 @@ function GuardianForm({ studentId, link, suggestPrimary, onCancel, onSaved }: Om
     });
     const saveError = save.isError ? errorInfo(save.error, GUARDIAN_SAVE_ERROR_TEXT) : null;
 
-    const submit = handleSubmit((values) => {
-        if (editing) {
-            const personChanged = PERSON_FIELDS.some((field) => dirtyFields[field]);
-            save.mutate({ mode: "edit", guardianMembershipId: link.guardianMembershipId, values, personChanged }, { onSuccess: () => onSaved(false) });
-        } else if (mode === "existing") {
-            if (!candidateId) {
-                setCandidateError(true);
-                return;
+    // mutateAsync: isSubmitting sigue en true hasta que responde Back (sin tutores duplicados)
+    const submit = handleSubmit(async (values) => {
+        try {
+            if (editing) {
+                const personChanged = PERSON_FIELDS.some((field) => dirtyFields[field]);
+                await save.mutateAsync({ mode: "edit", guardianMembershipId: link.guardianMembershipId, values, personChanged });
+                onSaved(false);
+            } else if (mode === "existing") {
+                if (!candidateId) {
+                    setCandidateError(true);
+                    return;
+                }
+                await save.mutateAsync({ mode: "existing", guardianMembershipId: candidateId, values, isPrimary });
+                onSaved(true);
+            } else {
+                await save.mutateAsync({ mode: "new", values, isPrimary });
+                onSaved(true);
             }
-            save.mutate({ mode: "existing", guardianMembershipId: candidateId, values, isPrimary }, { onSuccess: () => onSaved(true) });
-        } else {
-            save.mutate({ mode: "new", values, isPrimary }, { onSuccess: () => onSaved(true) });
+        } catch {
+            // El error se muestra con save.error
         }
     });
 
@@ -111,7 +119,7 @@ function GuardianForm({ studentId, link, suggestPrimary, onCancel, onSaved }: Om
                     <ul className="flex max-h-56 flex-col gap-1 overflow-y-auto">
                         {candidates.data?.map((candidate) => (
                             <li key={candidate.membershipId}>
-                                <label className={`flex min-h-11 cursor-pointer items-center gap-3 rounded-[10px] border px-3 py-2 text-sm ${candidateId === candidate.membershipId ? "border-blue bg-[#E8EEF9]" : "border-line"}`}>
+                                <label className={`flex min-h-11 cursor-pointer items-center gap-3 rounded-[10px] border px-3 py-2 text-sm ${candidateId === candidate.membershipId ? "border-blue bg-blue/10" : "border-line"}`}>
                                     <input
                                         type="radio"
                                         name="tutor-existente"
@@ -164,8 +172,8 @@ function GuardianForm({ studentId, link, suggestPrimary, onCancel, onSaved }: Om
                 </p>
             )}
             <div className="flex gap-3 lg:justify-end">
-                <button type="button" onClick={onCancel} disabled={save.isPending} className={`${BUTTON} border border-line bg-surface text-ink hover:bg-page`}>{CANCEL_LABEL}</button>
-                <button type="submit" disabled={save.isPending} className={`${BUTTON} bg-blue text-white hover:bg-blue/90`}>{save.isPending ? SAVING_LABEL : SAVE_LABEL}</button>
+                <button type="button" onClick={onCancel} disabled={isSubmitting || save.isPending} className={`${BUTTON} border border-line bg-surface text-ink hover:bg-page`}>{CANCEL_LABEL}</button>
+                <button type="submit" disabled={isSubmitting || save.isPending} className={`${BUTTON} bg-blue text-white hover:bg-blue/90`}>{isSubmitting || save.isPending ? SAVING_LABEL : SAVE_LABEL}</button>
             </div>
         </form>
     );

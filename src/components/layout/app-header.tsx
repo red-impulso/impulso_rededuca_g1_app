@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogoMark, Wordmark } from "@/components/brand/logo";
@@ -10,7 +10,12 @@ import { NotificationBell } from "@/features/notifications/notification-bell";
 import { SchoolSelector } from "@/features/session/school-selector";
 import { useSession } from "@/features/session/use-session";
 import { setActiveInstitutionId } from "@/lib/api";
-import { signOut } from "@/lib/supabase/sign-out";
+import { reloadToLogin, signOut } from "@/lib/supabase/sign-out";
+
+// Ítem activo también en sus subpantallas (por ejemplo /alumnos/123)
+function isActivePath(pathname: string, href: string): boolean {
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
 
 export function AppHeader() {
   const pathname = usePathname();
@@ -18,6 +23,22 @@ export function AppHeader() {
   const [open, setOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  // Al cambiar de pantalla (por la campanita, atrás, etc.) se cierra el menú del celular
+  const [menuPath, setMenuPath] = useState(pathname);
+  if (menuPath !== pathname) {
+    setMenuPath(pathname);
+    setOpen(false);
+  }
+
+  // Escape cierra el menú del celular
+  useEffect(() => {
+    if (!open) return;
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [open]);
 
   // Solo los ítems que puede ver el rol de la membresía activa
   const items = getNavItems(active.role);
@@ -29,8 +50,7 @@ export function AppHeader() {
     setActiveInstitutionId(null);
     // Recarga completa: borra cualquier estado que haya quedado en memoria
     // y muestra siempre el formulario de ingreso
-    // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- recarga completa a propósito: Cache Components conserva el estado de pantallas ya visitadas
-    window.location.assign("/ingresar");
+    reloadToLogin();
   }
 
   return (
@@ -45,16 +65,16 @@ export function AppHeader() {
         </div>
 
         {/* Menú en escritorio */}
-        <nav aria-label="Principal" className="hidden lg:block">
-          <ul className="flex items-center gap-1">
+        <nav aria-label="Principal" className="hidden min-w-0 flex-1 lg:block">
+          <ul className="flex flex-wrap items-center justify-center gap-1">
             {items.map((item) => {
-              const isActive = pathname === item.href;
+              const isActive = isActivePath(pathname, item.href);
               return (
                 <li key={item.href}>
                   <Link
                     href={item.href}
                     aria-current={isActive ? "page" : undefined}
-                    className={`rounded-lg px-3 py-2 text-sm font-medium ${
+                    className={`inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-medium ${
                       isActive ? "bg-brand text-white" : "text-ink hover:bg-page"
                     }`}
                   >
@@ -69,14 +89,14 @@ export function AppHeader() {
         <div className="flex shrink-0 items-center gap-2">
           {/* Campanita: lleva a la bandeja y muestra las no leídas (diseño provisorio de UX) */}
           <NotificationBell />
-          <span className="hidden text-sm text-muted sm:inline">{profile.fullName}</span>
+          <span className="hidden max-w-40 truncate text-sm text-muted sm:inline">{profile.fullName}</span>
           {/* Botón del menú en celular */}
           <button
             type="button"
             onClick={() => setOpen((value) => !value)}
             aria-expanded={open}
             aria-controls="mobile-menu"
-            className="rounded-lg border border-line px-3 py-2 text-sm font-medium text-ink lg:hidden"
+            className="min-h-11 rounded-lg border border-line px-3 text-sm font-medium text-ink lg:hidden"
           >
             {open ? "Cerrar" : "Menú"}
           </button>
@@ -84,7 +104,7 @@ export function AppHeader() {
           <button
             type="button"
             onClick={() => setConfirmOpen(true)}
-            className="rounded-lg px-2 py-2 text-sm font-medium text-brand hover:underline"
+            className="min-h-11 rounded-lg px-2 text-sm font-medium text-brand hover:underline"
           >
             Salir
           </button>
@@ -100,7 +120,7 @@ export function AppHeader() {
         >
           <ul className="flex flex-col">
             {items.map((item) => {
-              const isActive = pathname === item.href;
+              const isActive = isActivePath(pathname, item.href);
               return (
                 <li key={item.href}>
                   <Link

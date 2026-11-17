@@ -15,7 +15,8 @@ type InstitutionPanelProps = {
     onLogoChange: (file: File) => void;
 };
 
-const LOGO_TYPES = "image/png,image/jpeg,image/webp,image/svg+xml";
+// Los mismos tipos que acepta Back (sin WebP)
+const LOGO_TYPES = "image/png,image/jpeg,image/svg+xml";
 
 // Panel "Institución": logo, nombre, código, año lectivo y última actualización
 export function InstitutionPanel({ school, now = new Date(), uploading, error, onLogoChange }: InstitutionPanelProps) {

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { ErrorState } from "@/components/ui/error-state";
 import { SelectField } from "@/components/ui/form-fields";
 import { Modal } from "@/components/ui/modal";
@@ -52,6 +52,8 @@ function AssignForm({ courseId, subjectId: initialSubjectId, onCancel, onAssigne
     // undefined = todavía no lo cambió: se usa el docente actual de la materia
     const [teacherId, setTeacherId] = useState<string | undefined>(undefined);
     const [showErrors, setShowErrors] = useState(false);
+    // Evita enviar dos veces con un doble toque (el estado de React llega tarde; la ref no)
+    const busy = useRef(false);
 
     if (assignments.isPending) return <SkeletonLines lines={4} />;
     if (assignments.isError) {
@@ -78,7 +80,17 @@ function AssignForm({ courseId, subjectId: initialSubjectId, onCancel, onAssigne
                     setShowErrors(true);
                     return;
                 }
-                assign.mutate({ subjectId: subject.id, teacherId: selectedTeacher || null }, { onSuccess: onAssigned });
+                if (busy.current) return;
+                busy.current = true;
+                assign
+                    .mutateAsync({ subjectId: subject.id, teacherId: selectedTeacher || null })
+                    .then(onAssigned)
+                    .catch(() => {
+                        // El error se muestra con assign.error
+                    })
+                    .finally(() => {
+                        busy.current = false;
+                    });
             }}
             className="flex flex-col gap-4"
         >

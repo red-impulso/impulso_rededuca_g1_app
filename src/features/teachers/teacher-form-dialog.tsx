@@ -24,14 +24,22 @@ const BUTTON = "h-11 flex-1 rounded-[10px] px-4 font-semibold outline-blue/40 fo
 function TeacherForm({ teacher, onCancel, onSaved }: { teacher: TeacherDetail | null; onCancel: () => void; onSaved: TeacherFormDialogProps["onSaved"] }) {
     const save = useSaveTeacher();
     const editing = teacher !== null;
-    const { register, handleSubmit, formState: { errors } } = useForm<TeacherFormValues>({
+    const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<TeacherFormValues>({
         resolver: zodResolver(teacherSchema),
         defaultValues: teacherToValues(teacher),
         mode: "onTouched",
     });
     const error = save.isError ? errorInfo(save.error, TEACHER_SAVE_ERROR_TEXT) : null;
     return (
-        <form noValidate onSubmit={handleSubmit((values) => save.mutate({ id: teacher?.id ?? null, values }, { onSuccess: (id) => onSaved(id, !editing) }))} className="flex flex-col gap-4">
+        <form noValidate onSubmit={handleSubmit(async (values) => {
+            // mutateAsync: isSubmitting sigue en true hasta que responde Back (sin docentes duplicados)
+            try {
+                const id = await save.mutateAsync({ id: teacher?.id ?? null, values });
+                onSaved(id, !editing);
+            } catch {
+                // El error se muestra con save.error
+            }
+        })} className="flex flex-col gap-4">
             {!editing && <p className="text-sm text-muted">{NEW_TEACHER_HELP_TEXT}</p>}
             <div className="grid gap-4 sm:grid-cols-2">
                 <TextField id="docente-fullName" label={TEACHER_FIELD_LABELS.fullName} error={errors.fullName?.message} {...register("fullName")} />
@@ -45,8 +53,8 @@ function TeacherForm({ teacher, onCancel, onSaved }: { teacher: TeacherDetail | 
             </div>
             {error && <p role="alert" className={`rounded-[10px] px-4 py-3 text-sm ${error.kind === "offline" ? "bg-warning-bg text-warning" : "bg-error-bg text-error"}`}>{error.message}</p>}
             <div className="flex gap-3 lg:justify-end">
-                <button type="button" onClick={onCancel} disabled={save.isPending} className={`${BUTTON} border border-line bg-surface text-ink hover:bg-page`}>{CANCEL_LABEL}</button>
-                <button type="submit" disabled={save.isPending} className={`${BUTTON} bg-blue text-white hover:bg-blue/90`}>{save.isPending ? SAVING_LABEL : SAVE_LABEL}</button>
+                <button type="button" onClick={onCancel} disabled={isSubmitting || save.isPending} className={`${BUTTON} border border-line bg-surface text-ink hover:bg-page`}>{CANCEL_LABEL}</button>
+                <button type="submit" disabled={isSubmitting || save.isPending} className={`${BUTTON} bg-blue text-white hover:bg-blue/90`}>{isSubmitting || save.isPending ? SAVING_LABEL : SAVE_LABEL}</button>
             </div>
         </form>
     );

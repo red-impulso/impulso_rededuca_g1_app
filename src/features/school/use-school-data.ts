@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { QueryClient } from "@tanstack/react-query";
 import { useSession } from "@/features/session/use-session";
 import { ApiError, apiFetch } from "@/lib/api";
 import {
@@ -61,6 +62,15 @@ export function errorInfo(error: unknown, fallback: string): ErrorInfo {
 
 export function json(method: string, body: unknown): RequestInit {
     return { method, body: JSON.stringify(body) };
+}
+
+// Cursos y materias cambian la carga horaria y las asignaciones de los docentes (M8):
+// se vacían las dos cachés para no mostrar datos viejos
+function invalidateSchoolAndTeachers(queryClient: QueryClient, institutionId: string) {
+    return Promise.all([
+        queryClient.invalidateQueries({ queryKey: schoolKeys.all(institutionId) }),
+        queryClient.invalidateQueries({ queryKey: ["teachers", institutionId] }),
+    ]);
 }
 
 export function useInstitutionId(): string {
@@ -159,7 +169,7 @@ export function useSaveCourse() {
             );
             return parsed(parseCourse(data));
         },
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: schoolKeys.all(institutionId) }),
+        onSuccess: () => invalidateSchoolAndTeachers(queryClient, institutionId),
     });
 }
 
@@ -169,7 +179,7 @@ export function useDeleteCourse() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: (id: string) => apiFetch<void>(coursePath(id), { method: "DELETE" }),
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: schoolKeys.all(institutionId) }),
+        onSuccess: () => invalidateSchoolAndTeachers(queryClient, institutionId),
     });
 }
 
@@ -185,7 +195,7 @@ export function useSaveSubject() {
             );
             return parsed(parseSubject(data));
         },
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: schoolKeys.all(institutionId) }),
+        onSuccess: () => invalidateSchoolAndTeachers(queryClient, institutionId),
     });
 }
 
@@ -196,7 +206,7 @@ export function useSetSubjectTeacher() {
     return useMutation({
         mutationFn: ({ subjectId, teacherId }: { subjectId: string; teacherId: string | null }) =>
             apiFetch<unknown>(subjectTeacherPath(subjectId), json("PUT", { teacherMembershipId: teacherId })),
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: schoolKeys.all(institutionId) }),
+        onSuccess: () => invalidateSchoolAndTeachers(queryClient, institutionId),
     });
 }
 
@@ -206,7 +216,7 @@ export function useDeactivateSubject() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: (id: string) => apiFetch<unknown>(subjectPath(id), json("PATCH", { status: "inactive" })),
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: schoolKeys.all(institutionId) }),
+        onSuccess: () => invalidateSchoolAndTeachers(queryClient, institutionId),
     });
 }
 
@@ -216,6 +226,6 @@ export function useDeleteSubject() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: (id: string) => apiFetch<void>(subjectPath(id), { method: "DELETE" }),
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: schoolKeys.all(institutionId) }),
+        onSuccess: () => invalidateSchoolAndTeachers(queryClient, institutionId),
     });
 }

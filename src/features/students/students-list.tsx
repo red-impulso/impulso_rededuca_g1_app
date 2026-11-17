@@ -26,7 +26,7 @@ export function StudentStatusBadge({ status }: { status: StudentStatus | null })
 export function Avatar({ student, size = "sm" }: { student: { firstName: string; lastName: string }; size?: "sm" | "lg" }) {
     const dimensions = size === "lg" ? "h-14 w-14 text-xl" : "h-9 w-9 text-sm";
     return (
-        <span aria-hidden="true" className={`flex shrink-0 items-center justify-center rounded-full bg-[#E8EEF9] font-semibold text-blue ${dimensions}`}>
+        <span aria-hidden="true" className={`flex shrink-0 items-center justify-center rounded-full bg-blue/10 font-semibold text-blue ${dimensions}`}>
             {studentInitial(student)}
         </span>
     );
@@ -94,7 +94,7 @@ export function StudentsList({ students, page, limit, total, onEdit, onPage }: S
         <div className="flex flex-col gap-3">
             <div className="hidden overflow-x-auto rounded-2xl border border-line bg-surface lg:block">
                 <table className="w-full text-left text-sm">
-                    <thead className="bg-[#F1F5F9] text-xs font-semibold text-muted">
+                    <thead className="bg-page text-xs font-semibold text-muted">
                         <tr>
                             {Object.entries(STUDENT_COLUMNS).map(([key, label]) => (
                                 <th key={key} scope="col" className={`px-4 py-3 ${key === "actions" ? "text-right" : ""}`}>{label}</th>

@@ -48,7 +48,7 @@ function SubjectForm({ subject, subjects, onCancel, onSaved }: Omit<SubjectFormD
     const {
         register,
         handleSubmit,
-        formState: { errors },
+        formState: { errors, isSubmitting },
     } = useForm<SubjectFormValues>({
         resolver: zodResolver(makeSubjectSchema(subjects, courseList, subject?.id ?? null)),
         defaultValues: subjectToValues(subject),
@@ -69,7 +69,15 @@ function SubjectForm({ subject, subjects, onCancel, onSaved }: Omit<SubjectFormD
     return (
         <form
             noValidate
-            onSubmit={handleSubmit((values) => save.mutate({ id: subject?.id ?? null, values }, { onSuccess: (saved) => onSaved(saved, subject === null) }))}
+            onSubmit={handleSubmit(async (values) => {
+                // mutateAsync: isSubmitting sigue en true hasta que responde Back (sin doble envío)
+                try {
+                    const saved = await save.mutateAsync({ id: subject?.id ?? null, values });
+                    onSaved(saved, subject === null);
+                } catch {
+                    // El error se muestra con save.error
+                }
+            })}
             className="flex flex-col gap-4"
         >
             <TextField
@@ -130,11 +138,11 @@ function SubjectForm({ subject, subjects, onCancel, onSaved }: Omit<SubjectFormD
                 </p>
             )}
             <div className="flex gap-3 lg:justify-end">
-                <button type="button" onClick={onCancel} disabled={save.isPending} className={`${BUTTON_STYLES} border border-line bg-surface text-ink hover:bg-page`}>
+                <button type="button" onClick={onCancel} disabled={isSubmitting || save.isPending} className={`${BUTTON_STYLES} border border-line bg-surface text-ink hover:bg-page`}>
                     {CANCEL_LABEL}
                 </button>
-                <button type="submit" disabled={save.isPending} className={`${BUTTON_STYLES} bg-blue text-white hover:bg-blue/90`}>
-                    {save.isPending ? SAVING_LABEL : SAVE_LABEL}
+                <button type="submit" disabled={isSubmitting || save.isPending} className={`${BUTTON_STYLES} bg-blue text-white hover:bg-blue/90`}>
+                    {isSubmitting || save.isPending ? SAVING_LABEL : SAVE_LABEL}
                 </button>
             </div>
         </form>

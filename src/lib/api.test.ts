@@ -65,6 +65,20 @@ describe("apiFetch", () => {
         expect(error).toMatchObject({ status: 403, message: "Sin permiso" });
     });
 
+    it("devuelve undefined si una respuesta 2xx llega sin cuerpo", async () => {
+        const { apiFetch } = await loadApi();
+        fetchMock.mockResolvedValue(new Response("", { status: 200 }));
+
+        await expect(apiFetch("/notifications/1/read", { method: "POST" })).resolves.toBeUndefined();
+    });
+
+    it("con 401 lanza ApiError (sin navegador no redirige)", async () => {
+        const { apiFetch } = await loadApi();
+        fetchMock.mockResolvedValue(jsonResponse({ message: "Unauthorized" }, 401));
+
+        await expect(apiFetch("/me")).rejects.toMatchObject({ status: 401 });
+    });
+
     it("lanza ApiError con status 0 si no hay conexión", async () => {
         const { apiFetch } = await loadApi();
         fetchMock.mockRejectedValue(new TypeError("fetch failed"));

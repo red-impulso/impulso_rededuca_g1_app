@@ -9,7 +9,7 @@ import { SkeletonLines } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast";
 import { useSession } from "@/features/session/use-session";
 import { SchoolForm, SchoolHeader } from "./school-form";
-import { canManageSchool } from "./school-rules";
+import { canManageSchool, logoFileError } from "./school-rules";
 import type { SchoolFormValues } from "./school-schemas";
 import {
     FORBIDDEN_TEXT,
@@ -52,6 +52,8 @@ function SchoolContent() {
     const logo = useUploadLogo();
     const [saved, setSaved] = useState(false);
     const [leaveOpen, setLeaveOpen] = useState(false);
+    // Error del archivo elegido (tipo o tamaño), antes de llamar a Back
+    const [logoFileProblem, setLogoFileProblem] = useState<string | null>(null);
 
     if (school.isPending) {
         return (
@@ -97,8 +99,13 @@ function SchoolContent() {
                     else router.push(EXIT_HREF);
                 }}
                 logoUploading={logo.isPending}
-                logoError={logo.isError ? errorInfo(logo.error, LOGO_ERROR_TEXT).message : null}
-                onLogoChange={(file) => logo.mutate(file, { onSuccess: () => showToast(LOGO_UPDATED_TEXT) })}
+                logoError={logoFileProblem ?? (logo.isError ? errorInfo(logo.error, LOGO_ERROR_TEXT).message : null)}
+                onLogoChange={(file) => {
+                    const problem = logoFileError(file);
+                    setLogoFileProblem(problem);
+                    if (problem) return;
+                    logo.mutate(file, { onSuccess: () => showToast(LOGO_UPDATED_TEXT) });
+                }}
             />
             <ConfirmDialog
                 open={leaveOpen}
