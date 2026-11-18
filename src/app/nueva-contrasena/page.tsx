@@ -88,7 +88,7 @@ export default function NewPasswordPage() {
   }
 
   return (
-    <main className="grid flex-1 lg:min-h-0 lg:basis-0 lg:grid-cols-2 lg:grid-rows-1">
+    <main className="grid flex-1 bg-login lg:min-h-0 lg:basis-0 lg:grid-cols-2 lg:grid-rows-1">
       {/* Panel de marca: solo en escritorio, a la izquierda */}
       <div className="hidden lg:flex">
         <BrandPanel />
@@ -127,7 +127,7 @@ export default function NewPasswordPage() {
               </p>
               <Link
                 href="/ingresar"
-                className="w-full rounded-lg bg-brand px-4 py-2.5 text-center font-semibold text-white"
+                className="w-full rounded-lg bg-brand px-4 py-2.5 text-center font-semibold text-on-color"
               >
                 Ir a ingresar
               </Link>
@@ -171,7 +171,7 @@ export default function NewPasswordPage() {
               <button
                 type="submit"
                 disabled={saving}
-                className="w-full rounded-lg bg-brand px-4 py-2.5 font-semibold text-white disabled:opacity-60"
+                className="fx-lift-glow fx-glow-brand w-full rounded-lg bg-brand px-4 py-2.5 font-semibold text-on-color disabled:opacity-60"
               >
                 {saving ? "Guardando…" : "Guardar contraseña"}
               </button>

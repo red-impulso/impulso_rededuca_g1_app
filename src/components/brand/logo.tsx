@@ -18,11 +18,11 @@ export function LogoMark({ size = 40, title }: LogoMarkProps) {
   );
 }
 
-// "dark": para fondos oscuros (panel de marca del login). "light": para fondos claros.
+// "dark": para fondos oscuros (panel del login y header). "light": para fondos claros.
 type WordmarkTone = "dark" | "light";
 
 const WORDMARK_COLORS: Record<WordmarkTone, { red: string; educa: string }> = {
-  dark: { red: "text-emerald-400", educa: "text-white" },
+  dark: { red: "text-aqua-glow", educa: "text-white" },
   light: { red: "text-brand", educa: "text-ink" },
 };
 

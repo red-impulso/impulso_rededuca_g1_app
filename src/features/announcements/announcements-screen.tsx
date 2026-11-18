@@ -54,7 +54,7 @@ export function AnnouncementsScreen() {
                 <button
                     type="button"
                     onClick={() => setFormOpen(true)}
-                    className="h-11 self-start rounded-[10px] bg-blue px-4 font-semibold text-white outline-blue/40 hover:bg-blue/90 focus-visible:outline-3"
+                    className="h-11 self-start rounded-[10px] bg-blue px-4 font-semibold text-on-color outline-blue/40 hover:bg-blue/90 focus-visible:outline-3"
                 >
                     {NEW_BUTTON_LABEL}
                 </button>

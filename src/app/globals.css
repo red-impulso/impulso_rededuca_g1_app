@@ -1,7 +1,11 @@
 @import "tailwindcss";
 
+/* Modo oscuro: next-themes pone la clase "dark" en <html> */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* Colores de la marca RedEduca (variables globales).
-   Paleta B-03: tinta #14213d, naranja #f46a3c, azul #2563eb, verde #0f8a81 */
+   Paleta B-03: tinta #14213d, naranja #f46a3c, azul #2563eb, verde #0f8a81.
+   :root va primero: src/app/manifest.test.ts lee de acá --brand y --page (modo claro). */
 :root {
   --ink: #14213d; /* tinta: texto principal */
   --accent: #f46a3c; /* naranja: acentos y llamados a la acción */
@@ -18,6 +22,102 @@
   --success-bg: #ecfdf5;
   --warning: #92400e; /* texto de atención (notas de 6 a 6,9 y avisos) */
   --warning-bg: #fef3c7; /* fondo de atención */
+
+  /* Texto sobre un fondo de color lleno (bg-brand, bg-blue, bg-error, bg-accent):
+     blanco en claro y petróleo en oscuro, porque ahí esos fondos son claros */
+  --on-color: #ffffff;
+  /* Fondo semitransparente detrás de modales y paneles (no cambia en modo oscuro) */
+  --overlay: #062a2c;
+
+  /* Petróleo: header, footer y parte baja del fondo del panel */
+  --petroleum-900: #062a2c;
+  --petroleum-800: #0b3f42;
+  --petroleum-700: #0f5c5a;
+  --petroleum-500: #2f7470;
+  /* Agua: fondo del panel */
+  --aqua-300: #a9d3cd;
+  --aqua-100: #e3f1ef;
+  --aqua-glow: #5eead4; /* brillo del login, silueta y "Red" sobre fondo oscuro */
+  /* Durazno y cielo: fondo del login */
+  --peach-200: #fbe3d4;
+  --peach-100: #fdf1ea;
+  --peach-50: #fde7da; /* texto del footer y del header */
+  --sky-50: #eef4fb;
+  --orange-soft: #fdba74; /* brillo del login e ítem activo del header oscuro */
+
+  /* Silueta de líneas del login (/ingresar). Mismos valores en modo oscuro. */
+  --sky-300: #7dd3fc;
+  --sky-400: #38bdf8;
+  --cyan-400: #22d3ee;
+  --blue-500: #3b82f6;
+  --green-400: #4ade80;
+  --mint-50: #e0f7f4;
+  --mint-200: #a7f3d0;
+
+  --footer-bg: var(--petroleum-800);
+  --footer-text: var(--peach-50);
+
+  /* Header del panel ("medio"): degradé de verde agua a durazno */
+  --header-from: #cfe7e3;
+  --header-via: #d9ece9;
+  --header-to: #fbe3d4; /* igual a --peach-200 */
+  --header-line: #b9dcd6;
+}
+
+/* Modo oscuro: solo cambian los valores; las clases (bg-surface, text-ink...) son las mismas */
+.dark {
+  --ink: #e6f1ef;
+  --muted: #9fb5b2;
+  --page: #071a1c;
+  --surface: #0f2629;
+  --line: #1f3d40;
+  --brand: #14b8a6;
+  --brand-dark: #062a2c;
+  --accent: #fb8a5e;
+  --blue: #60a5fa;
+  --error: #fca5a5;
+  --error-bg: #3b1414;
+  --success: #6ee7b7;
+  --success-bg: #0b2e22;
+  --warning: #fcd34d;
+  --warning-bg: #3a2a0a;
+  --on-color: #062a2c;
+  --peach-200: #1a2a2e;
+  --peach-100: #122326;
+  --sky-50: #0d1d21;
+  --aqua-100: #0a2124;
+  --aqua-300: #0d3033;
+  --footer-bg: #041c1e;
+  --header-from: #0a2124;
+  --header-via: #0d3033;
+  --header-to: #1a2a2e;
+  --header-line: #1f3d40;
+  color-scheme: dark;
+}
+
+:root {
+  /* Fondo del login: durazno arriba a celeste abajo */
+  --login-bg: linear-gradient(
+    160deg,
+    var(--peach-200),
+    var(--peach-100),
+    var(--sky-50)
+  );
+  /* Fondo del panel: sube oscuro desde el footer y se aclara hacia arriba.
+     Cortes en px (no en %): la franja oscura mide siempre lo mismo y el <main>
+     deja ese espacio libre abajo, así el texto fuera de tarjetas no cae sobre ella. */
+  --panel-bg: linear-gradient(
+    to top,
+    var(--petroleum-800) 0,
+    var(--petroleum-500) 80px,
+    var(--aqua-300) 220px,
+    var(--aqua-100) 360px,
+    var(--page) 520px
+  );
+  /* Ancho de la silueta del login: las líneas llegan a 0,39 × ancho a la derecha
+     del corte; así quedan siempre ~24 px antes del formulario (185 px a 1280,
+     369 px a 1568, tope de 400 px desde ~1650 px). */
+  --login-silhouette-w: clamp(120px, calc(64vw - 634px), 400px);
 }
 
 /* Expone las variables como clases de Tailwind: bg-brand, text-ink, bg-accent, font-sans, etc. */
@@ -37,8 +137,45 @@
   --color-success-bg: var(--success-bg);
   --color-warning: var(--warning);
   --color-warning-bg: var(--warning-bg);
+  --color-on-color: var(--on-color);
+  --color-overlay: var(--overlay);
+  --color-petroleum-900: var(--petroleum-900);
+  --color-petroleum-800: var(--petroleum-800);
+  --color-petroleum-700: var(--petroleum-700);
+  --color-petroleum-500: var(--petroleum-500);
+  --color-aqua-300: var(--aqua-300);
+  --color-aqua-100: var(--aqua-100);
+  --color-aqua-glow: var(--aqua-glow);
+
+  --color-peach-200: var(--peach-200);
+  --color-peach-100: var(--peach-100);
+  --color-peach-50: var(--peach-50);
+  --color-sky-50: var(--sky-50);
+  --color-orange-soft: var(--orange-soft);
+  --color-sky-300: var(--sky-300);
+  --color-sky-400: var(--sky-400);
+  --color-cyan-400: var(--cyan-400);
+  --color-blue-500: var(--blue-500);
+  --color-green-400: var(--green-400);
+  --color-mint-50: var(--mint-50);
+  --color-mint-200: var(--mint-200);
+  --color-footer-bg: var(--footer-bg);
+  --color-footer-text: var(--footer-text);
+  --color-header-from: var(--header-from);
+  --color-header-via: var(--header-via);
+  --color-header-to: var(--header-to);
+  --color-header-line: var(--header-line);
   --font-sans: var(--font-poppins), system-ui, -apple-system, "Segoe UI", Roboto,
     "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Fondos con degradé (clases bg-login y bg-panel) */
+@utility bg-login {
+  background-image: var(--login-bg);
+}
+
+@utility bg-panel {
+  background-image: var(--panel-bg);
 }
 
 body {
@@ -55,4 +192,124 @@ html,
 body {
   max-width: 100%;
   overflow-x: hidden;
+}
+
+/* Efectos de hover y de carga (pedido de animaciones). Clases propias con prefijo "fx-":
+   no tocan las demás transiciones de los componentes. Los efectos de hover solo se aplican
+   con mouse (hover: hover) y nunca en un botón deshabilitado. Con prefers-reduced-motion
+   no hay movimiento (ni crecer, ni subir, ni reflejo que cruza) y las barras de carga quedan quietas. */
+@layer components {
+  /* Botón Ingresar: un reflejo diagonal lo cruza y el botón crece un poco.
+     isolation + z-index -1: el reflejo va sobre el fondo pero debajo del texto. */
+  .fx-shine {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    transition: transform 250ms ease;
+  }
+  .fx-shine::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: linear-gradient(
+      115deg,
+      transparent 30%,
+      color-mix(in srgb, var(--mint-50) 55%, transparent) 50%,
+      transparent 70%
+    );
+    transform: translateX(-110%);
+  }
+  @media (hover: hover) {
+    .fx-shine:not(:disabled):hover {
+      transform: scale(1.03);
+    }
+    .fx-shine:not(:disabled):hover::before {
+      transform: translateX(110%);
+      transition: transform 700ms ease;
+    }
+  }
+
+  /* Menú del header: la opción que está bajo el mouse se ilumina en verde clarito
+     (más marcado que el verde del header). La elegida (aria-current) ya está en verde
+     lleno y no cambia. */
+  .fx-nav-item {
+    transition:
+      background-color 200ms ease,
+      box-shadow 200ms ease;
+  }
+  @media (hover: hover) {
+    .fx-nav-item:not([aria-current="page"]):hover {
+      background-color: color-mix(in srgb, var(--brand) 22%, transparent);
+      box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--brand) 35%, transparent),
+        0 0 12px color-mix(in srgb, var(--brand) 30%, transparent);
+    }
+  }
+
+  /* Salir y Guardar: el botón sube apenas y se ilumina debajo con su propio color.
+     El color del brillo lo pone .fx-glow-brand o .fx-glow-blue. */
+  .fx-lift-glow {
+    --fx-glow: var(--brand);
+    transition:
+      transform 200ms ease,
+      box-shadow 200ms ease;
+  }
+  .fx-glow-brand {
+    --fx-glow: var(--brand);
+  }
+  .fx-glow-blue {
+    --fx-glow: var(--blue);
+  }
+  @media (hover: hover) {
+    .fx-lift-glow:not(:disabled):hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 18px -6px color-mix(in srgb, var(--fx-glow) 60%, transparent);
+    }
+  }
+
+  /* Carga del panel después de iniciar sesión: tres barras que pulsan en secuencia */
+  .fx-loading-bar {
+    transform-origin: center;
+    animation: fx-bar-pulse 900ms ease-in-out infinite;
+  }
+  .fx-loading-bar:nth-child(2) {
+    animation-delay: 150ms;
+  }
+  .fx-loading-bar:nth-child(3) {
+    animation-delay: 300ms;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .fx-shine,
+    .fx-shine:not(:disabled):hover,
+    .fx-lift-glow,
+    .fx-lift-glow:not(:disabled):hover {
+      transform: none;
+      transition: none;
+    }
+    /* Sin reflejo que cruza: el reflejo no se muestra */
+    .fx-shine::before {
+      display: none;
+    }
+    .fx-nav-item {
+      transition: none;
+    }
+    .fx-loading-bar {
+      animation: none;
+    }
+  }
+}
+
+@keyframes fx-bar-pulse {
+  0%,
+  100% {
+    transform: scaleY(0.45);
+    opacity: 0.55;
+  }
+  50% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
 }

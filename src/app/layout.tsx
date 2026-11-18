@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import { SiteFooter } from "@/components/layout/site-footer";
+import { ThemeProvider } from "@/components/theme/theme-provider";
 import { ToastProvider } from "@/components/ui/toast";
 import "./globals.css";
 
@@ -19,10 +20,13 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="es" className={`${poppins.variable} h-full antialiased`}>
+    // suppressHydrationWarning: next-themes agrega la clase "dark" en <html> antes de que cargue React
+    <html lang="es" className={`${poppins.variable} h-full antialiased`} suppressHydrationWarning>
       <body className="min-h-full flex flex-col">
-        <ToastProvider>{children}</ToastProvider>
-        <SiteFooter />
+        <ThemeProvider>
+          <ToastProvider>{children}</ToastProvider>
+          <SiteFooter />
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -64,7 +64,7 @@ import {
 import type { LastAccessFilter, UserFilters, UserRow, UserStatus } from "./types";
 import { PartialBatchError, useActiveAdminCount, useChangeRole, useExportUsers, useResetPassword, useSetActive, useUserCounts, useUsers } from "./use-users-data";
 
-const PRIMARY = "inline-flex h-11 items-center justify-center gap-2 rounded-[10px] bg-blue px-4 font-semibold text-white outline-blue/40 hover:bg-blue/90 focus-visible:outline-3 disabled:opacity-60";
+const PRIMARY = "inline-flex h-11 items-center justify-center gap-2 rounded-[10px] bg-blue px-4 font-semibold text-on-color outline-blue/40 hover:bg-blue/90 focus-visible:outline-3 disabled:opacity-60";
 const SECONDARY = "inline-flex h-11 items-center justify-center rounded-[10px] border border-line bg-surface px-4 text-sm font-semibold text-ink outline-blue/40 hover:bg-page focus-visible:outline-3 disabled:opacity-60";
 
 type Confirm = { kind: "deactivate" | "activate" | "reset" | "last-admin"; users: UserRow[] } | { kind: "role"; users: UserRow[]; role: Role } | null;
@@ -269,15 +269,15 @@ function UsersContent() {
             <div className="flex flex-col gap-4">
                 <Filters filters={filters} total={users.data?.total ?? null} onChange={setFilters} />
                 {selectedRows.length > 0 && (
-                    <div role="region" aria-label="Acciones en lote" className="flex flex-wrap items-center gap-2 rounded-2xl bg-ink p-3 text-white">
+                    <div role="region" aria-label="Acciones en lote" className="flex flex-wrap items-center gap-2 rounded-2xl bg-ink p-3 text-surface">
                         <span className="text-sm font-semibold">{usersSelectedText(selectedRows.length)}</span>
-                        <button type="button" onClick={() => (selectedRows.some(isSelf) ? showToast(SELF_CHANGE_TEXT) : setRolePick(selectedRows))} className="h-11 rounded-[10px] px-3 text-sm font-semibold hover:bg-white/10">{USER_MENU.role[0]}</button>
+                        <button type="button" onClick={() => (selectedRows.some(isSelf) ? showToast(SELF_CHANGE_TEXT) : setRolePick(selectedRows))} className="h-11 rounded-[10px] px-3 text-sm font-semibold hover:bg-surface/10">{USER_MENU.role[0]}</button>
                         <button type="button" onClick={() => {
                             if (selectedRows.some(isSelf)) return showToast(SELF_CHANGE_TEXT);
                             setConfirm(removesLastAdmin(selectedRows, activeAdmins, rows) ? { kind: "last-admin", users: selectedRows } : { kind: "deactivate", users: selectedRows });
-                        }} className="h-11 rounded-[10px] px-3 text-sm font-semibold hover:bg-white/10">{USER_MENU.deactivate[0]}</button>
-                        <button type="button" onClick={() => setConfirm({ kind: "reset", users: selectedRows })} className="h-11 rounded-[10px] px-3 text-sm font-semibold hover:bg-white/10">{USER_MENU.reset[0]}</button>
-                        <button type="button" onClick={() => setSelected([])} className="ml-auto flex h-11 w-11 items-center justify-center rounded-[10px] hover:bg-white/10" aria-label="Quitar selección">✕</button>
+                        }} className="h-11 rounded-[10px] px-3 text-sm font-semibold hover:bg-surface/10">{USER_MENU.deactivate[0]}</button>
+                        <button type="button" onClick={() => setConfirm({ kind: "reset", users: selectedRows })} className="h-11 rounded-[10px] px-3 text-sm font-semibold hover:bg-surface/10">{USER_MENU.reset[0]}</button>
+                        <button type="button" onClick={() => setSelected([])} className="ml-auto flex h-11 w-11 items-center justify-center rounded-[10px] hover:bg-surface/10" aria-label="Quitar selección">✕</button>
                     </div>
                 )}
                 {content}

@@ -32,7 +32,7 @@ import type { StudentFilters, StudentProfile } from "./types";
 import { useStudentProfile, useStudents } from "./use-students-data";
 
 const PRIMARY_BUTTON =
-    "inline-flex h-11 items-center justify-center gap-2 rounded-[10px] bg-blue px-4 font-semibold text-white outline-blue/40 hover:bg-blue/90 focus-visible:outline-3";
+    "inline-flex h-11 items-center justify-center gap-2 rounded-[10px] bg-blue px-4 font-semibold text-on-color outline-blue/40 hover:bg-blue/90 focus-visible:outline-3";
 
 function Header({ subtitle, onCreate }: { subtitle?: string; onCreate?: () => void }) {
     return (

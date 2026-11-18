@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogoMark, Wordmark } from "@/components/brand/logo";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { getNavItems } from "@/config/navigation";
 import { NotificationBell } from "@/features/notifications/notification-bell";
@@ -43,7 +44,7 @@ export function AppHeader() {
   // Solo los ítems que puede ver el rol de la membresía activa
   const items = getNavItems(active.role);
 
-  // Cierra la sesión de S[upabase y vuelve al formulario de ingreso
+  // Cierra la sesión de Supabase y vuelve al formulario de ingreso
   async function handleLogout() {
     setLoggingOut(true);
     await signOut();
@@ -54,7 +55,8 @@ export function AppHeader() {
   }
 
   return (
-    <header className="border-b border-line bg-surface">
+    // Header "medio": degradé de verde agua a durazno (en oscuro, petróleo), texto en tinta
+    <header className="border-b border-header-line bg-linear-to-r from-header-from via-header-via via-60% to-header-to text-ink">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
         <div className="flex min-w-0 items-center gap-3">
           <LogoMark size={36} />
@@ -74,8 +76,8 @@ export function AppHeader() {
                   <Link
                     href={item.href}
                     aria-current={isActive ? "page" : undefined}
-                    className={`inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-medium ${
-                      isActive ? "bg-brand text-white" : "text-ink hover:bg-page"
+                    className={`inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-medium outline-blue/40 focus-visible:outline-3 ${
+                      isActive ? "bg-brand text-on-color" : "fx-nav-item text-ink"
                     }`}
                   >
                     {item.label}
@@ -87,6 +89,11 @@ export function AppHeader() {
         </nav>
 
         <div className="flex shrink-0 items-center gap-2">
+          {/* Selector de tema en escritorio: botón que abre un menú.
+              En celular va dentro del menú desplegable (3 botones). */}
+          <div className="hidden lg:block">
+            <ThemeToggle variant="menu" />
+          </div>
           {/* Campanita: lleva a la bandeja y muestra las no leídas (diseño provisorio de UX) */}
           <NotificationBell />
           <span className="hidden max-w-40 truncate text-sm text-muted sm:inline">{profile.fullName}</span>
@@ -96,7 +103,7 @@ export function AppHeader() {
             onClick={() => setOpen((value) => !value)}
             aria-expanded={open}
             aria-controls="mobile-menu"
-            className="min-h-11 rounded-lg border border-line px-3 text-sm font-medium text-ink lg:hidden"
+            className="min-h-11 rounded-lg border border-header-line px-3 text-sm font-medium outline-blue/40 focus-visible:outline-3 lg:hidden text-ink hover:bg-white/50 dark:hover:bg-white/10"
           >
             {open ? "Cerrar" : "Menú"}
           </button>
@@ -104,7 +111,7 @@ export function AppHeader() {
           <button
             type="button"
             onClick={() => setConfirmOpen(true)}
-            className="min-h-11 rounded-lg px-2 text-sm font-medium text-brand hover:underline"
+            className="fx-lift-glow fx-glow-brand min-h-11 rounded-lg px-2 text-sm font-medium text-brand outline-blue/40 hover:underline focus-visible:outline-3"
           >
             Salir
           </button>
@@ -116,8 +123,13 @@ export function AppHeader() {
         <nav
           id="mobile-menu"
           aria-label="Principal (celular)"
-          className="border-t border-line px-4 py-2 lg:hidden"
+          className="border-t border-header-line px-4 py-2 lg:hidden"
         >
+          {/* Tema: "Tema" a la izquierda y los 3 botones a la derecha */}
+          <div className="flex items-center justify-between gap-3 px-3 py-2">
+            <span className="text-sm font-medium text-ink">Tema</span>
+            <ThemeToggle variant="group" />
+          </div>
           <ul className="flex flex-col">
             {items.map((item) => {
               const isActive = isActivePath(pathname, item.href);
@@ -127,8 +139,8 @@ export function AppHeader() {
                     href={item.href}
                     onClick={() => setOpen(false)}
                     aria-current={isActive ? "page" : undefined}
-                    className={`block rounded-lg px-3 py-3 font-medium ${
-                      isActive ? "bg-brand text-white" : "text-ink"
+                    className={`block rounded-lg px-3 py-3 font-medium outline-blue/40 focus-visible:outline-3 ${
+                      isActive ? "bg-brand text-on-color" : "fx-nav-item text-ink"
                     }`}
                   >
                     {item.label}

@@ -1,6 +1,8 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { StudentProfileView } from "./student-profile";
+import type { GuardianLink } from "../guardians/types";
+import { StudentProfileView, fichaGuardians } from "./student-profile";
+import { mailtoHref } from "./students-rules";
 import { StudentsList } from "./students-list";
 import type { StudentProfile, StudentSummary } from "./types";
 
@@ -60,5 +62,56 @@ describe("StudentProfileView", () => {
         const html = renderToStaticMarkup(<StudentProfileView profile={empty} activity={{ status: "ready", data: [] }} actions={null} />);
         expect(html).toContain("Sin información académica");
         expect(html).toContain("Sin actividad reciente.");
+    });
+});
+
+describe("Tutores en la ficha (QA-M9-02 y 03)", () => {
+    const guardianLink = (id: string, change: Partial<GuardianLink>): GuardianLink => ({
+        guardianMembershipId: id,
+        relationship: null,
+        isPrimary: false,
+        isEmergencyContact: false,
+        isFinancialResponsible: false,
+        status: "active",
+        updatedAt: null,
+        fullName: `Tutor ${id}`,
+        firstName: null,
+        lastName: null,
+        dni: null,
+        phone: null,
+        altPhone: null,
+        address: null,
+        email: null,
+        otherStudentsCount: 0,
+        ...change,
+    });
+
+    it("con los vínculos usa el principal real, el parentesco y saltea los inactivos", () => {
+        const links = [guardianLink("a", { status: "inactive", isPrimary: false }), guardianLink("b", { relationship: "padre" }), guardianLink("c", { relationship: "madre", isPrimary: true })];
+        const result = fichaGuardians(profile.guardians, links);
+        expect(result.map((item) => [item.label, item.fullName, item.relationship])).toEqual([
+            ["Tutor principal", "Tutor c", "Madre"],
+            ["Tutor secundario", "Tutor b", "Padre"],
+        ]);
+    });
+
+    it("sin vínculos cargados muestra los contactos del perfil con «—»", () => {
+        expect(fichaGuardians(profile.guardians, null)).toEqual([{ id: "g1", label: "Tutor principal", fullName: "Laura Díaz", relationship: "—", phone: "3884123456", email: null }]);
+    });
+
+    it("la ficha muestra Relación y Contactar con mailto", () => {
+        const html = renderToStaticMarkup(
+            <StudentProfileView profile={profile} activity={{ status: "ready", data: [] }} actions={null} guardianLinks={[guardianLink("c", { relationship: "madre", isPrimary: true, email: "c@demo.rededuca" })]} />,
+        );
+        expect(html).toContain("Relación: Madre");
+        expect(html).toContain('href="mailto:c@demo.rededuca?subject=Consulta%20sobre%20D%C3%ADaz%2C%20Tom%C3%A1s"');
+        expect(html).toContain("Copiar email");
+        expect(html).toContain("Sin teléfono");
+    });
+
+    it("mailtoHref", () => {
+        expect(mailtoHref(null)).toBeNull();
+        expect(mailtoHref("  ")).toBeNull();
+        expect(mailtoHref(" a@b.com ")).toBe("mailto:a@b.com");
     });
 });

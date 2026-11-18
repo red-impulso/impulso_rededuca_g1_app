@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseStudentPage, parseStudentProfile, studentsListPath, toStudentBody } from "./students-api";
+import { normalizeSearchTerm, parseStudentPage, parseStudentProfile, studentsListPath, toStudentBody } from "./students-api";
 import {
     DEFAULT_STUDENT_FILTERS,
     formatDate,
@@ -19,6 +19,16 @@ describe("students-api", () => {
         const path = studentsListPath({ ...DEFAULT_STUDENT_FILTERS, q: " díaz ", courseId: "c1", status: "active", page: 2 });
         expect(path).toBe("/students?q=d%C3%ADaz&courseId=c1&status=active&page=2&limit=25");
         expect(studentsListPath({ ...DEFAULT_STUDENT_FILTERS, sort: "last-desc", shift: "morning", schoolYear: 2027 })).toContain("shift=morning&schoolYear=2027&sort=-lastName");
+    });
+
+    it("manda el DNI con puntos o espacios solo con dígitos (QA-M7-02)", () => {
+        expect(normalizeSearchTerm(" 62.000.001 ")).toBe("62000001");
+        expect(normalizeSearchTerm("62 000 001")).toBe("62000001");
+        expect(normalizeSearchTerm("62000001")).toBe("62000001");
+        expect(normalizeSearchTerm("Díaz")).toBe("Díaz");
+        expect(normalizeSearchTerm("A-12.3")).toBe("A-12.3");
+        expect(normalizeSearchTerm(" . ")).toBe(".");
+        expect(studentsListPath({ ...DEFAULT_STUDENT_FILTERS, q: "62.000.001" })).toBe("/students?q=62000001&page=1&limit=25");
     });
 
     it("lee la página de alumnos de Back", () => {

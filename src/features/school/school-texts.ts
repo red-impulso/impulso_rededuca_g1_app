@@ -148,6 +148,11 @@ export function deleteCourseTitle(courseLabel: string): string {
     return `¿Eliminar ${courseLabel}?`;
 }
 export const DELETE_COURSE_TEXT = "Se quitarán sus materias y docentes asignados. No se puede deshacer.";
+// Curso con estudiantes: Back lo rechaza (409), así que se avisa antes y no se deja confirmar
+export function courseHasStudentsText(count: number): string {
+    const students = count === 1 ? "1 estudiante vinculado" : `${count} estudiantes vinculados`;
+    return `Este curso tiene ${students}. Para eliminarlo, primero cámbialos de curso.`;
+}
 
 // ---- Pantallas de cursos ----
 export const COURSES_TITLE = "Cursos";

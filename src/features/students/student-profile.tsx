@@ -1,14 +1,17 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { GuardianContactActions } from "../guardians/guardian-contact";
+import { groupGuardians, relationshipLabel } from "../guardians/guardians-rules";
+import { GUARDIAN_FIELD_LABELS } from "../guardians/guardians-texts";
+import type { GuardianLink } from "../guardians/types";
 import { courseLabel, shiftLabel } from "../school/school-rules";
 import { EMPTY_VALUE } from "../school/school-texts";
 import { Avatar, StudentStatusBadge } from "./students-list";
-import { countText, formatDate, formatDni, gradeText, percentText, phoneHref, relativeDay, studentName, studentStatusLabel } from "./students-rules";
+import { countText, formatDate, formatDni, gradeText, percentText, relativeDay, studentName, studentStatusLabel } from "./students-rules";
 import {
     ACADEMIC_LABELS,
     ATTENDANCE_BARS,
     BACK_TO_STUDENTS_LABEL,
-    CONTACT_LABEL,
     GUARDIAN_PRIMARY_LABEL,
     GUARDIAN_SECONDARY_LABEL,
     KPI_LABELS,
@@ -21,8 +24,37 @@ import {
     SECTION_TITLES,
     SEE_COURSES_LABEL,
     SEND_ANNOUNCEMENT_LABEL,
+    contactSubject,
 } from "./students-texts";
-import type { StudentActivity, StudentProfile } from "./types";
+import type { GuardianContact, StudentActivity, StudentProfile } from "./types";
+
+export type FichaGuardian = { id: string; label: string; fullName: string; relationship: string; phone: string | null; email: string | null };
+
+// «Tutores y familia» de la ficha. Con los vínculos de M9 (GET /students/:id/guardians) se muestran
+// el principal real, el secundario activo y el parentesco (QA-M9-02). Mientras cargan, o si fallan,
+// los contactos del perfil, que no traen parentesco.
+export function fichaGuardians(contacts: GuardianContact[], links: GuardianLink[] | null): FichaGuardian[] {
+    if (links) {
+        const { primary, secondary } = groupGuardians(links, false);
+        const toFicha = (link: GuardianLink, label: string): FichaGuardian => ({
+            id: link.guardianMembershipId,
+            label,
+            fullName: link.fullName,
+            relationship: relationshipLabel(link),
+            phone: link.phone,
+            email: link.email,
+        });
+        return [...primary.slice(0, 1).map((link) => toFicha(link, GUARDIAN_PRIMARY_LABEL)), ...secondary.map((link) => toFicha(link, GUARDIAN_SECONDARY_LABEL))];
+    }
+    return contacts.slice(0, 2).map((contact, index) => ({
+        id: contact.id,
+        label: index === 0 ? GUARDIAN_PRIMARY_LABEL : GUARDIAN_SECONDARY_LABEL,
+        fullName: contact.fullName,
+        relationship: EMPTY_VALUE,
+        phone: contact.phone,
+        email: contact.email,
+    }));
+}
 
 export type ActivityState = { status: "loading" } | { status: "error"; message: string; onRetry: () => void } | { status: "ready"; data: StudentActivity[] };
 
@@ -84,20 +116,25 @@ function Donut({ percentage }: { percentage: number | null }) {
     );
 }
 
+const GUARDIAN_ACTION = "inline-flex min-h-11 items-center rounded-[10px] px-2 text-sm font-semibold text-blue outline-blue/40 hover:underline focus-visible:outline-3";
+
 type StudentProfileViewProps = {
     profile: StudentProfile;
     activity: ActivityState;
     actions: ReactNode;
+    // Vínculos de M9; null mientras cargan
+    guardianLinks?: GuardianLink[] | null;
+    onCopyEmail?: (email: string) => void;
 };
 
 // Ficha del alumno (SDD 5.2): encabezado, KPI y secciones
-export function StudentProfileView({ profile, activity, actions }: StudentProfileViewProps) {
+export function StudentProfileView({ profile, activity, actions, guardianLinks = null, onCopyEmail = () => undefined }: StudentProfileViewProps) {
     const { personal, academic, academicSummary: grades, attendanceSummary: attendance, observations } = profile;
     const course = academic.course;
     const subtitle = [personal.dni ? `DNI ${formatDni(personal.dni)}` : null, personal.fileNumber ? `Legajo ${personal.fileNumber}` : null, course ? courseLabel(course) : null].filter(Boolean).join(" · ");
     const noGrades = grades.averageGrade === null && !grades.approvedSubjects && !grades.pendingSubjects;
     const totalAttendance = (attendance.justified ?? 0) + (attendance.unjustified ?? 0) + (attendance.late ?? 0);
-    const [primary, secondary] = profile.guardians;
+    const guardians = fichaGuardians(profile.guardians, guardianLinks);
 
     return (
         <div className="flex flex-col gap-4">
@@ -195,26 +232,22 @@ export function StudentProfileView({ profile, activity, actions }: StudentProfil
                         </div>
                     </Section>
                     <Section title={SECTION_TITLES.guardians} defaultOpen={false}>
-                        {profile.guardians.length === 0 ? (
+                        {guardians.length === 0 ? (
                             <p className="text-sm text-muted">{EMPTY_VALUE}</p>
                         ) : (
                             <ul className="flex flex-col gap-3">
-                                {[primary, secondary].filter(Boolean).map((guardian, index) => {
-                                    const call = phoneHref(guardian.phone);
-                                    return (
-                                        <li key={guardian.id} className="rounded-[10px] border border-line p-3">
-                                            <p className="text-xs font-semibold text-muted">{index === 0 ? GUARDIAN_PRIMARY_LABEL : GUARDIAN_SECONDARY_LABEL}</p>
-                                            <p className="font-semibold text-ink">{guardian.fullName || EMPTY_VALUE}</p>
-                                            <p className="text-sm text-muted">{guardian.phone ?? "Sin teléfono"} · {guardian.email ?? "Sin correo"}</p>
-                                            <div className="mt-2 flex flex-wrap gap-2">
-                                                <Link href="/comunicados" className="inline-flex min-h-11 items-center rounded-[10px] px-2 text-sm font-semibold text-blue hover:underline">{SEND_ANNOUNCEMENT_LABEL}</Link>
-                                                {(call || guardian.email) && (
-                                                    <a href={call ?? `mailto:${guardian.email}`} className="inline-flex min-h-11 items-center rounded-[10px] px-2 text-sm font-semibold text-blue hover:underline">{CONTACT_LABEL}</a>
-                                                )}
-                                            </div>
-                                        </li>
-                                    );
-                                })}
+                                {guardians.map((guardian) => (
+                                    <li key={guardian.id} className="rounded-[10px] border border-line p-3">
+                                        <p className="text-xs font-semibold text-muted">{guardian.label}</p>
+                                        <p className="font-semibold text-ink">{guardian.fullName || EMPTY_VALUE}</p>
+                                        <p className="text-sm text-muted">{GUARDIAN_FIELD_LABELS.relationship}: {guardian.relationship}</p>
+                                        <p className="text-sm break-all text-muted">{guardian.phone ?? "Sin teléfono"} · {guardian.email ?? "Sin correo"}</p>
+                                        <div className="mt-2 flex flex-wrap gap-2">
+                                            <Link href="/comunicados" className={GUARDIAN_ACTION}>{SEND_ANNOUNCEMENT_LABEL}</Link>
+                                            <GuardianContactActions email={guardian.email} subject={contactSubject(studentName(personal))} onCopyEmail={onCopyEmail} className={GUARDIAN_ACTION} />
+                                        </div>
+                                    </li>
+                                ))}
                             </ul>
                         )}
                     </Section>

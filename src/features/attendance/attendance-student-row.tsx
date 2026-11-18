@@ -19,7 +19,7 @@ const SELECTED_STYLES: Record<AttendanceStatus, string> = {
     present: "border-success bg-success-bg text-success",
     absent: "border-error bg-error-bg text-error",
     late: "border-warning bg-warning-bg text-warning",
-    justified: "border-blue bg-blue text-white",
+    justified: "border-blue bg-blue text-on-color",
 };
 
 const UNSELECTED_STYLES = "border-line bg-surface text-ink";

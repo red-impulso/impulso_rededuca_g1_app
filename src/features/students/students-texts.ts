@@ -30,9 +30,10 @@ export const CALL_GUARDIAN_LABEL = "Llamar tutor";
 export const ATTENDANCE_LABEL = "Asistencia";
 export const GENERATE_REPORT_LABEL = "Generar informe";
 export const GENERATING_REPORT_LABEL = "Generando…";
-export const REPORT_ERROR_TEXT = "No pudimos generar el informe.";
+export const REPORT_ERROR_TEXT = "No se pudo generar el informe.";
+export const REPORT_DOWNLOADED_TEXT = "Informe descargado.";
 export const CONTACT_GUARDIAN_LABEL = "Contactar tutor";
-export const NO_GUARDIAN_CONTACT_TEXT = "El alumno no tiene un tutor con teléfono o correo.";
+export const NO_GUARDIAN_CONTACT_TEXT = "El alumno no tiene un tutor con correo.";
 export const BACK_TO_STUDENTS_LABEL = "Volver a alumnos";
 export const ALL_COURSES_OPTION = "Todos los cursos";
 export const ALL_OPTION = "Todos";
@@ -130,4 +131,7 @@ export function pageRangeText(page: number, limit: number, total: number): strin
     const from = (page - 1) * limit + 1;
     const to = Math.min(page * limit, total);
     return `${from}-${to} de ${total.toLocaleString("es-AR")}`;
+}
+export function contactSubject(studentName: string): string {
+    return `Consulta sobre ${studentName}`;
 }

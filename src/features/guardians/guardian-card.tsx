@@ -1,25 +1,28 @@
 import { StatusBadge } from "../../components/ui/status-badge";
 import { EMPTY_VALUE } from "../school/school-texts";
-import { phoneHref } from "../students/students-rules";
+import { GuardianContactActions } from "./guardian-contact";
 import { formatPhone, guardianInitials, isActiveLink, relationshipLabel, roleLabels } from "./guardians-rules";
-import { CONTACT_LABEL, EDIT_GUARDIAN_LABEL, GUARDIAN_DETAIL_LABEL, GUARDIAN_FIELD_LABELS, LINK_STATUS_LABELS, MAKE_PRIMARY_LABEL, UNLINK_LABEL, otherStudentsText } from "./guardians-texts";
+import { EDIT_GUARDIAN_LABEL, GUARDIAN_DETAIL_LABEL, GUARDIAN_FIELD_LABELS, LINK_STATUS_LABELS, MAKE_PRIMARY_LABEL, MARKING_PRIMARY_LABEL, UNLINK_LABEL, otherStudentsText } from "./guardians-texts";
 import type { GuardianLink } from "./types";
 
 const STATUS_TONES = { active: "success", inactive: "neutral", pending: "warning" } as const;
 export const ACTION = "inline-flex min-h-11 items-center justify-center rounded-[10px] px-3 text-sm font-semibold text-blue outline-blue/40 hover:bg-page focus-visible:outline-3 disabled:opacity-50";
-export const PRIMARY_BUTTON = "inline-flex h-11 items-center justify-center gap-2 rounded-[10px] bg-blue px-4 font-semibold text-white outline-blue/40 hover:bg-blue/90 focus-visible:outline-3";
+export const PRIMARY_BUTTON = "inline-flex h-11 items-center justify-center gap-2 rounded-[10px] bg-blue px-4 font-semibold text-on-color outline-blue/40 hover:bg-blue/90 focus-visible:outline-3";
 
 type CardProps = {
     link: GuardianLink;
     busy: boolean;
+    // Este tutor se está marcando como principal
+    marking?: boolean;
+    // Asunto del correo de «Contactar»
+    contactSubject: string;
+    onCopyEmail: (email: string) => void;
     onEdit: () => void;
     onMakePrimary: () => void;
     onUnlink: () => void;
 };
 
-export function GuardianCard({ link, busy, onEdit, onMakePrimary, onUnlink }: CardProps) {
-    const call = phoneHref(link.phone);
-    const contact = call ?? (link.email ? `mailto:${link.email}` : null);
+export function GuardianCard({ link, busy, marking = false, contactSubject, onCopyEmail, onEdit, onMakePrimary, onUnlink }: CardProps) {
     const active = isActiveLink(link);
     const roles = roleLabels(link);
     return (
@@ -54,9 +57,9 @@ export function GuardianCard({ link, busy, onEdit, onMakePrimary, onUnlink }: Ca
             </details>
             <div className="mt-2 flex flex-wrap gap-1 border-t border-line pt-2">
                 <button type="button" onClick={onEdit} className={ACTION}>{EDIT_GUARDIAN_LABEL.split(" ")[0]}</button>
-                {contact ? <a href={contact} className={ACTION}>{CONTACT_LABEL}</a> : <span aria-disabled="true" className={`${ACTION} opacity-50`}>{CONTACT_LABEL}</span>}
+                <GuardianContactActions email={link.email} subject={contactSubject} onCopyEmail={onCopyEmail} className={ACTION} />
                 {active && !link.isPrimary && (
-                    <button type="button" disabled={busy} onClick={onMakePrimary} className={ACTION}>{MAKE_PRIMARY_LABEL}</button>
+                    <button type="button" disabled={busy} aria-busy={marking} onClick={onMakePrimary} className={ACTION}>{marking ? MARKING_PRIMARY_LABEL : MAKE_PRIMARY_LABEL}</button>
                 )}
                 {active && (
                     <button type="button" disabled={busy} onClick={onUnlink} className={`${ACTION} text-error`}>{UNLINK_LABEL}</button>

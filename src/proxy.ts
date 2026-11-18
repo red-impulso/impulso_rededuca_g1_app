@@ -64,7 +64,8 @@ export async function proxy(request: NextRequest) {
 export const config = {
   // Todo salvo archivos internos de Next, imágenes, íconos y el manifiesto
   // (el navegador lo pide sin sesión; si lo redirigimos, no se puede instalar la app)
+  // y robots.txt (si se redirige, los buscadores reciben el HTML de /ingresar)
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|icon.svg|icon.png|manifest.webmanifest|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|icon.svg|icon.png|manifest.webmanifest|robots.txt|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
   ],
 };

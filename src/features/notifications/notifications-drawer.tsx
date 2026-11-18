@@ -39,7 +39,7 @@ export function NotificationsDrawer({ open, onClose }: NotificationsDrawerProps)
                 if (target === dialogRef.current) onClose();
                 else if (target instanceof Element && target.closest("a")) onClose();
             }}
-            className="m-0 ml-auto h-dvh max-h-dvh w-full max-w-md border-l border-line bg-page p-0 text-ink backdrop:bg-ink/40"
+            className="m-0 ml-auto h-dvh max-h-dvh w-full max-w-md border-l border-line bg-page p-0 text-ink backdrop:bg-overlay/40"
         >
             {open && (
                 <div className="flex h-full flex-col">

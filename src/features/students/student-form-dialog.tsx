@@ -108,7 +108,7 @@ function StudentForm({ profile, defaultCourseId, onCancel, onSaved }: Omit<Stude
             )}
             <div className="flex gap-3 lg:justify-end">
                 <button type="button" onClick={onCancel} disabled={isSubmitting || save.isPending} className={`${BUTTON_STYLES} border border-line bg-surface text-ink hover:bg-page`}>{CANCEL_LABEL}</button>
-                <button type="submit" disabled={isSubmitting || save.isPending} className={`${BUTTON_STYLES} bg-blue text-white hover:bg-blue/90`}>{isSubmitting || save.isPending ? SAVING_LABEL : SAVE_LABEL}</button>
+                <button type="submit" disabled={isSubmitting || save.isPending} className={`fx-lift-glow fx-glow-blue ${BUTTON_STYLES} bg-blue text-on-color hover:bg-blue/90`}>{isSubmitting || save.isPending ? SAVING_LABEL : SAVE_LABEL}</button>
             </div>
         </form>
     );

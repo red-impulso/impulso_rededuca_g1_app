@@ -2,7 +2,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { initialMembership, switchErrorText } from "../session/institution-switch";
 import { UsersList } from "./users-list";
-import { normalizeQuery, parseUserPage, usersListPath } from "./users-api";
+import { normalizeQuery, parseUserPage, parseUserStatus, usersListPath } from "./users-api";
 import { DEFAULT_USER_FILTERS, accessLevel, can, filterChips, isLastAdmin, lastAccessText, readUserFilters, removesLastAdmin, userFiltersQuery } from "./users-rules";
 import { toCreateUserBody, userSchema, userToValues } from "./users-schemas";
 import { showingText, usersNoResultsTitle } from "./users-texts";
@@ -20,6 +20,15 @@ describe("users-api", () => {
         expect(page?.data).toHaveLength(1);
         expect(page?.data[0]).toMatchObject({ fullName: "Laura Suárez", role: "teacher", status: "active", dni: "30111222" });
         expect(parseUserPage({ nope: true })).toBeNull();
+    });
+    it("lee los estados heredados de M8 (QA-M10-03)", () => {
+        expect(parseUserStatus("activo")).toBe("active");
+        expect(parseUserStatus("licencia")).toBe("active");
+        expect(parseUserStatus("inactivo")).toBe("inactive");
+        expect(parseUserStatus("blocked")).toBe("blocked");
+        expect(parseUserStatus("otro")).toBeNull();
+        expect(parseUserStatus(null)).toBeNull();
+        expect(parseUserPage({ data: [{ ...apiUser, status: "activo" }] })?.data[0].status).toBe("active");
     });
 });
 
@@ -55,6 +64,10 @@ describe("users-rules", () => {
         expect(removesLastAdmin([admin], null, [admin])).toBe(true);
         // Un docente no cuenta
         expect(removesLastAdmin([{ ...admin, role: "teacher" }], 1, [admin])).toBe(false);
+        // Back cuenta 0 (el admin está como "activo" de M8), pero hay uno visible: se protege (QA-M10-09)
+        const legacy = parseUserPage({ data: [{ ...apiUser, role: "admin", status: "activo" }] })!.data[0];
+        expect(removesLastAdmin([legacy], 0, [legacy])).toBe(true);
+        expect(removesLastAdmin([legacy], 0, [legacy, { ...legacy, membershipId: "m2" }])).toBe(false);
     });
     it("textos de M10", () => {
         expect(usersNoResultsTitle("Peralta")).toBe("No encontramos usuarios para “Peralta”.");

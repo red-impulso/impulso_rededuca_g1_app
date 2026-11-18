@@ -269,7 +269,7 @@ export function AnnouncementFormFields({
                 <button
                     type="submit"
                     disabled={publishing}
-                    className={`${BUTTON_STYLES} bg-blue text-white hover:bg-blue/90 disabled:bg-line disabled:text-muted`}
+                    className={`${BUTTON_STYLES} bg-blue text-on-color hover:bg-blue/90 disabled:bg-line disabled:text-muted`}
                 >
                     {publishing ? PUBLISHING_LABEL : FORM_SUBMIT_LABEL}
                 </button>

@@ -8,6 +8,7 @@ import { Modal } from "@/components/ui/modal";
 import { CANCEL_LABEL, SAVE_LABEL, SAVING_LABEL, SELECT_PLACEHOLDER } from "../school/school-texts";
 import { errorInfo } from "../school/use-school-data";
 import { GUARDIAN_RELATIONSHIPS } from "./guardians-api";
+import { availableCandidates } from "./guardians-rules";
 import { guardianSchema, linkOnlySchema, linkToValues } from "./guardians-schemas";
 import type { GuardianFormValues } from "./guardians-schemas";
 import {
@@ -32,6 +33,8 @@ type GuardianFormDialogProps = {
     studentId: string;
     // null = agregar tutor
     link: GuardianLink | null;
+    // Vínculos del alumno: los activos no se ofrecen como tutor existente
+    links: GuardianLink[];
     // Sin tutor principal activo, el nuevo entra como principal
     suggestPrimary: boolean;
     onOpenChange: (open: boolean) => void;
@@ -51,7 +54,7 @@ function Check({ id, label, ...input }: { id: string; label: string } & React.Co
     );
 }
 
-function GuardianForm({ studentId, link, suggestPrimary, onCancel, onSaved }: Omit<GuardianFormDialogProps, "open" | "onOpenChange"> & { onCancel: () => void }) {
+function GuardianForm({ studentId, link, links, suggestPrimary, onCancel, onSaved }: Omit<GuardianFormDialogProps, "open" | "onOpenChange"> & { onCancel: () => void }) {
     const editing = link !== null;
     const [mode, setMode] = useState<Mode>("new");
     const [search, setSearch] = useState("");
@@ -67,6 +70,7 @@ function GuardianForm({ studentId, link, suggestPrimary, onCancel, onSaved }: Om
         defaultValues: linkToValues(link),
         mode: "onTouched",
     });
+    const options = candidates.data ? availableCandidates(candidates.data, links) : undefined;
     const saveError = save.isError ? errorInfo(save.error, GUARDIAN_SAVE_ERROR_TEXT) : null;
 
     // mutateAsync: isSubmitting sigue en true hasta que responde Back (sin tutores duplicados)
@@ -115,9 +119,9 @@ function GuardianForm({ studentId, link, suggestPrimary, onCancel, onSaved }: Om
                     <label htmlFor="tutor-buscar" className={LABEL_STYLES}>{SEARCH_GUARDIAN_LABEL}</label>
                     <input id="tutor-buscar" type="search" value={search} onChange={(event) => setSearch(event.target.value)} className={`${CONTROL_STYLES} border-line`} />
                     {candidates.isError && <p role="alert" className="text-sm text-error">{`${CANDIDATES_ERROR_TEXT} ${errorInfo(candidates.error, "").message}`}</p>}
-                    {candidates.data?.length === 0 && <p className="text-sm text-muted">{NO_CANDIDATES_TEXT}</p>}
+                    {options?.length === 0 && <p className="text-sm text-muted">{NO_CANDIDATES_TEXT}</p>}
                     <ul className="flex max-h-56 flex-col gap-1 overflow-y-auto">
-                        {candidates.data?.map((candidate) => (
+                        {options?.map((candidate) => (
                             <li key={candidate.membershipId}>
                                 <label className={`flex min-h-11 cursor-pointer items-center gap-3 rounded-[10px] border px-3 py-2 text-sm ${candidateId === candidate.membershipId ? "border-blue bg-blue/10" : "border-line"}`}>
                                     <input
@@ -173,7 +177,7 @@ function GuardianForm({ studentId, link, suggestPrimary, onCancel, onSaved }: Om
             )}
             <div className="flex gap-3 lg:justify-end">
                 <button type="button" onClick={onCancel} disabled={isSubmitting || save.isPending} className={`${BUTTON} border border-line bg-surface text-ink hover:bg-page`}>{CANCEL_LABEL}</button>
-                <button type="submit" disabled={isSubmitting || save.isPending} className={`${BUTTON} bg-blue text-white hover:bg-blue/90`}>{isSubmitting || save.isPending ? SAVING_LABEL : SAVE_LABEL}</button>
+                <button type="submit" disabled={isSubmitting || save.isPending} className={`fx-lift-glow fx-glow-blue ${BUTTON} bg-blue text-on-color hover:bg-blue/90`}>{isSubmitting || save.isPending ? SAVING_LABEL : SAVE_LABEL}</button>
             </div>
         </form>
     );

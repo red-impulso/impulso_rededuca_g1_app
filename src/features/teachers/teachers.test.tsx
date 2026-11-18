@@ -15,7 +15,7 @@ import {
     teacherFiltersQuery,
     toCsv,
 } from "./teachers-rules";
-import { teacherSchema, teacherToValues, toTeacherPatch } from "./teachers-schemas";
+import { teacherEditSchema, teacherSchema, teacherToValues, toTeacherEditPatch, toTeacherPatch } from "./teachers-schemas";
 import type { AssignmentRow, TeacherCandidate } from "./types";
 
 const apiTeacher = {
@@ -99,6 +99,12 @@ describe("teachers-schemas", () => {
         expect(teacherSchema.safeParse({ ...values, maxWeeklyHours: "81" }).success).toBe(false);
         expect(teacherSchema.safeParse({ ...values, email: "x" }).success).toBe(false);
         expect(toTeacherPatch(values)).toEqual({ fullName: "Ana Paz", email: "ana@x.com", phone: undefined, fileNumber: "L-1", employmentStatus: "titular", status: "activo", maxWeeklyHours: 30, hiredAt: "2020-01-02" });
+    });
+
+    it("al editar no manda legajo ni correo y no los valida (M8-N03)", () => {
+        const values = { ...teacherToValues(null), fullName: "Ana Paz", email: "", fileNumber: "L-1", hiredAt: "2020-01-02" };
+        expect(teacherEditSchema.safeParse(values).success).toBe(true);
+        expect(toTeacherEditPatch(values)).toEqual({ fullName: "Ana Paz", phone: null, employmentStatus: "titular", status: "activo", maxWeeklyHours: 30, hiredAt: "2020-01-02" });
     });
 });
 

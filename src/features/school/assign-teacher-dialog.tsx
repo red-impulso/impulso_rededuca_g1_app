@@ -138,7 +138,7 @@ function AssignForm({ courseId, subjectId: initialSubjectId, onCancel, onAssigne
                 >
                     {CANCEL_LABEL}
                 </button>
-                <button type="submit" disabled={assign.isPending} className={`${BUTTON_STYLES} bg-blue text-white hover:bg-blue/90`}>
+                <button type="submit" disabled={assign.isPending} className={`fx-lift-glow fx-glow-blue ${BUTTON_STYLES} bg-blue text-on-color hover:bg-blue/90`}>
                     {assign.isPending ? SAVING_LABEL : ASSIGN_SAVE_LABEL}
                 </button>
             </div>

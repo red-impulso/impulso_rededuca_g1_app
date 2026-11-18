@@ -51,7 +51,7 @@ function render(props: Partial<Parameters<typeof SchoolForm>[0]> = {}) {
             saving={false}
             saveError={null}
             saved={false}
-            onSave={async () => true}
+            onSave={async () => null}
             onCancel={() => {}}
             logoUploading={false}
             logoError={null}

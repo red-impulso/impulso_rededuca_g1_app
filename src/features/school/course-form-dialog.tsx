@@ -149,7 +149,7 @@ function CourseForm({ course, courses, defaultSchoolYear, onCancel, onSaved }: O
                 >
                     {CANCEL_LABEL}
                 </button>
-                <button type="submit" disabled={isSubmitting || save.isPending} className={`${BUTTON_STYLES} bg-blue text-white hover:bg-blue/90`}>
+                <button type="submit" disabled={isSubmitting || save.isPending} className={`fx-lift-glow fx-glow-blue ${BUTTON_STYLES} bg-blue text-on-color hover:bg-blue/90`}>
                     {isSubmitting || save.isPending ? SAVING_LABEL : SAVE_LABEL}
                 </button>
             </div>

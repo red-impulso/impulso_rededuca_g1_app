@@ -66,7 +66,7 @@ export function SubjectDetail({ subject, onEdit, onChangeTeacher, onDeactivate }
                 <Row label={SUBJECT_DETAIL_LABELS.updatedAt}>{formatUpdatedAt(subject.updatedAt)}</Row>
             </dl>
             <div className="flex flex-wrap gap-3">
-                <button type="button" onClick={onEdit} className={`${buttonStyles} bg-blue text-white hover:bg-blue/90`}>
+                <button type="button" onClick={onEdit} className={`${buttonStyles} bg-blue text-on-color hover:bg-blue/90`}>
                     {EDIT_SUBJECT_LABEL}
                 </button>
                 <button

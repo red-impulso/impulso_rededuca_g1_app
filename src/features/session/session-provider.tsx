@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { ApiError, apiFetch, setActiveInstitutionId } from "@/lib/api";
+import { LoadingBars } from "@/components/ui/loading-bars";
 import { useToast } from "@/components/ui/toast";
 import { reloadToLogin, signOut } from "@/lib/supabase/sign-out";
 import { INSTITUTION_CHANNEL, InstitutionSwitchContext, initialMembership, readRememberedInstitution, rememberInstitution, switchErrorText } from "./institution-switch";
@@ -139,10 +140,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
     if (state.status === "loading") {
         return (
+            // Dura lo que tarda GET /me: después de iniciar sesión es lo que separa el login del panel
             <main className="flex flex-1 items-center justify-center px-6 py-10">
-                <p role="status" className="text-muted">
-                    Cargando...
-                </p>
+                <LoadingBars />
             </main>
         );
     }
@@ -157,7 +157,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
                     <button
                         type="button"
                         onClick={retry}
-                        className="rounded-lg bg-brand px-4 py-2.5 font-semibold text-white"
+                        className="rounded-lg bg-brand px-4 py-2.5 font-semibold text-on-color"
                     >
                         Reintentar
                     </button>

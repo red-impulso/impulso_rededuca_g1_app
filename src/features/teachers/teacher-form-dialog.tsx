@@ -6,9 +6,9 @@ import { SelectField, TextField } from "@/components/ui/form-fields";
 import { Modal } from "@/components/ui/modal";
 import { CANCEL_LABEL, SAVE_LABEL, SAVING_LABEL } from "../school/school-texts";
 import { errorInfo } from "../school/use-school-data";
-import { teacherSchema, teacherToValues } from "./teachers-schemas";
+import { teacherEditSchema, teacherSchema, teacherToValues } from "./teachers-schemas";
 import type { TeacherFormValues } from "./teachers-schemas";
-import { EDIT_TEACHER_LABEL, EMPLOYMENT_LABELS, NEW_TEACHER_HELP_TEXT, NEW_TEACHER_LABEL, TEACHER_FIELD_LABELS, TEACHER_SAVE_ERROR_TEXT, TEACHER_STATUS_LABELS } from "./teachers-texts";
+import { EDIT_TEACHER_LABEL, EMPLOYMENT_LABELS, LOCKED_FIELD_HELP, NEW_TEACHER_HELP_TEXT, NEW_TEACHER_LABEL, TEACHER_FIELD_LABELS, TEACHER_SAVE_ERROR_TEXT, TEACHER_STATUS_LABELS } from "./teachers-texts";
 import type { TeacherDetail } from "./types";
 import { useSaveTeacher } from "./use-teachers-data";
 
@@ -25,7 +25,7 @@ function TeacherForm({ teacher, onCancel, onSaved }: { teacher: TeacherDetail | 
     const save = useSaveTeacher();
     const editing = teacher !== null;
     const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<TeacherFormValues>({
-        resolver: zodResolver(teacherSchema),
+        resolver: zodResolver(editing ? teacherEditSchema : teacherSchema),
         defaultValues: teacherToValues(teacher),
         mode: "onTouched",
     });
@@ -43,9 +43,9 @@ function TeacherForm({ teacher, onCancel, onSaved }: { teacher: TeacherDetail | 
             {!editing && <p className="text-sm text-muted">{NEW_TEACHER_HELP_TEXT}</p>}
             <div className="grid gap-4 sm:grid-cols-2">
                 <TextField id="docente-fullName" label={TEACHER_FIELD_LABELS.fullName} error={errors.fullName?.message} {...register("fullName")} />
-                <TextField id="docente-email" type="email" label={TEACHER_FIELD_LABELS.email} error={errors.email?.message} {...register("email")} />
+                <TextField id="docente-email" type="email" label={TEACHER_FIELD_LABELS.email} readOnly={editing} help={editing ? LOCKED_FIELD_HELP : undefined} error={errors.email?.message} {...register("email")} />
                 <TextField id="docente-phone" type="tel" label={TEACHER_FIELD_LABELS.phone} error={errors.phone?.message} {...register("phone")} />
-                <TextField id="docente-fileNumber" label={TEACHER_FIELD_LABELS.fileNumber} placeholder="L-1042" error={errors.fileNumber?.message} {...register("fileNumber")} />
+                <TextField id="docente-fileNumber" label={TEACHER_FIELD_LABELS.fileNumber} placeholder={editing ? "—" : "L-1042"} readOnly={editing} help={editing ? LOCKED_FIELD_HELP : undefined} error={errors.fileNumber?.message} {...register("fileNumber")} />
                 <SelectField id="docente-employment" label={TEACHER_FIELD_LABELS.employmentStatus} options={Object.entries(EMPLOYMENT_LABELS).map(([value, label]) => ({ value, label }))} error={errors.employmentStatus?.message} {...register("employmentStatus")} />
                 <SelectField id="docente-status" label={TEACHER_FIELD_LABELS.status} options={Object.entries(TEACHER_STATUS_LABELS).map(([value, label]) => ({ value, label }))} error={errors.status?.message} {...register("status")} />
                 <TextField id="docente-maxHours" inputMode="numeric" label={TEACHER_FIELD_LABELS.maxWeeklyHours} error={errors.maxWeeklyHours?.message} {...register("maxWeeklyHours")} />
@@ -54,7 +54,7 @@ function TeacherForm({ teacher, onCancel, onSaved }: { teacher: TeacherDetail | 
             {error && <p role="alert" className={`rounded-[10px] px-4 py-3 text-sm ${error.kind === "offline" ? "bg-warning-bg text-warning" : "bg-error-bg text-error"}`}>{error.message}</p>}
             <div className="flex gap-3 lg:justify-end">
                 <button type="button" onClick={onCancel} disabled={isSubmitting || save.isPending} className={`${BUTTON} border border-line bg-surface text-ink hover:bg-page`}>{CANCEL_LABEL}</button>
-                <button type="submit" disabled={isSubmitting || save.isPending} className={`${BUTTON} bg-blue text-white hover:bg-blue/90`}>{isSubmitting || save.isPending ? SAVING_LABEL : SAVE_LABEL}</button>
+                <button type="submit" disabled={isSubmitting || save.isPending} className={`fx-lift-glow fx-glow-blue ${BUTTON} bg-blue text-on-color hover:bg-blue/90`}>{isSubmitting || save.isPending ? SAVING_LABEL : SAVE_LABEL}</button>
             </div>
         </form>
     );

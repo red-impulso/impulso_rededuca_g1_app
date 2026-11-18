@@ -99,7 +99,7 @@ export function CourseDetail({ course, assignments, students, onRetryAssignments
             </dl>
 
             <div className="flex flex-wrap gap-3">
-                <button type="button" onClick={onEdit} className={`${buttonStyles} bg-blue text-white hover:bg-blue/90`}>
+                <button type="button" onClick={onEdit} className={`${buttonStyles} bg-blue text-on-color hover:bg-blue/90`}>
                     {EDIT_COURSE_LABEL}
                 </button>
                 <button type="button" onClick={onAssign} className={`${buttonStyles} border border-line bg-surface text-ink hover:bg-page`}>

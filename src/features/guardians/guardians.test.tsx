@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { guardianCandidatesPath, guardiansPath, makePrimaryPath, parseGuardianLinks, toGuardianPersonBody } from "./guardians-api";
-import { formatPhone, groupGuardians, roleLabels, unlinkRule } from "./guardians-rules";
+import { availableCandidates, formatPhone, groupGuardians, roleLabels, unlinkRule } from "./guardians-rules";
 import { guardianSchema, linkToValues } from "./guardians-schemas";
 import { GuardianCard } from "./guardian-card";
 import type { GuardianLink } from "./types";
@@ -89,17 +89,47 @@ describe("guardians-rules", () => {
 describe("GuardianCard", () => {
     const noop = () => undefined;
     it("muestra datos, estado con texto y acciones", () => {
-        const html = renderToStaticMarkup(<GuardianCard link={link("g", { phone: "3884123456" })} busy={false} onEdit={noop} onMakePrimary={noop} onUnlink={noop} />);
+        const html = renderToStaticMarkup(<GuardianCard link={link("g", { phone: "3884123456" })} busy={false} contactSubject="Consulta sobre Díaz, Tomás" onCopyEmail={noop} onEdit={noop} onMakePrimary={noop} onUnlink={noop} />);
         expect(html).toContain("Tutor g");
         expect(html).toContain("Madre");
         expect(html).toContain("Activo");
-        expect(html).toContain('href="tel:3884123456"');
+        expect(html).not.toContain("tel:");
+        expect(html).toContain("388 412-3456");
         expect(html).toContain("Marcar como principal");
         expect(html).toContain("Desvincular");
     });
 
     it("el principal no muestra Marcar como principal; inactivo no se desvincula", () => {
-        expect(renderToStaticMarkup(<GuardianCard link={link("g", { isPrimary: true })} busy={false} onEdit={noop} onMakePrimary={noop} onUnlink={noop} />)).not.toContain("Marcar como principal");
-        expect(renderToStaticMarkup(<GuardianCard link={link("g", { status: "inactive" })} busy={false} onEdit={noop} onMakePrimary={noop} onUnlink={noop} />)).not.toContain("Desvincular");
+        expect(renderToStaticMarkup(<GuardianCard link={link("g", { isPrimary: true })} busy={false} contactSubject="Consulta sobre Díaz, Tomás" onCopyEmail={noop} onEdit={noop} onMakePrimary={noop} onUnlink={noop} />)).not.toContain("Marcar como principal");
+        expect(renderToStaticMarkup(<GuardianCard link={link("g", { status: "inactive" })} busy={false} contactSubject="Consulta sobre Díaz, Tomás" onCopyEmail={noop} onEdit={noop} onMakePrimary={noop} onUnlink={noop} />)).not.toContain("Desvincular");
+    });
+});
+
+describe("QA-M9", () => {
+    const noop = () => undefined;
+
+    it("Contactar abre un mailto con asunto y ofrece Copiar email (QA-M9-03)", () => {
+        const html = renderToStaticMarkup(<GuardianCard link={link("g", { email: "ana+tutora@demo.rededuca", phone: "3884123456" })} busy={false} contactSubject="Consulta sobre Díaz, Tomás" onCopyEmail={noop} onEdit={noop} onMakePrimary={noop} onUnlink={noop} />);
+        expect(html).toContain('href="mailto:ana%2Btutora@demo.rededuca?subject=Consulta%20sobre%20D%C3%ADaz%2C%20Tom%C3%A1s"');
+        expect(html).toContain("Copiar email");
+    });
+
+    it("sin correo, Contactar queda deshabilitado y no hay Copiar email", () => {
+        const html = renderToStaticMarkup(<GuardianCard link={link("g")} busy={false} contactSubject="x" onCopyEmail={noop} onEdit={noop} onMakePrimary={noop} onUnlink={noop} />);
+        expect(html).toMatch(/<button type="button" disabled=""[^>]*>Contactar<\/button>/);
+        expect(html).not.toContain("mailto:");
+        expect(html).not.toContain("Copiar email");
+    });
+
+    it("muestra Marcando… mientras se marca como principal (QA-M9-09)", () => {
+        const html = renderToStaticMarkup(<GuardianCard link={link("g")} busy marking contactSubject="x" onCopyEmail={noop} onEdit={noop} onMakePrimary={noop} onUnlink={noop} />);
+        expect(html).toContain("Marcando…");
+        expect(html).toContain('aria-busy="true"');
+    });
+
+    it("no ofrece tutores con vínculo activo; sí los inactivos (QA-M9-05)", () => {
+        const candidates = ["g1", "g2", "g3"].map((membershipId) => ({ membershipId, fullName: membershipId, dni: null, email: null }));
+        const links = [link("g1"), link("g2", { status: "inactive" })];
+        expect(availableCandidates(candidates, links).map((item) => item.membershipId)).toEqual(["g2", "g3"]);
     });
 });

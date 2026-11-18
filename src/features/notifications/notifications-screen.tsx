@@ -126,7 +126,7 @@ export function NotificationsScreen() {
                     type="button"
                     onClick={handleMarkAll}
                     disabled={markingAll}
-                    className="h-11 self-start rounded-[10px] bg-blue px-4 font-semibold text-white outline-blue/40 hover:bg-blue/90 focus-visible:outline-3 disabled:opacity-60"
+                    className="h-11 self-start rounded-[10px] bg-blue px-4 font-semibold text-on-color outline-blue/40 hover:bg-blue/90 focus-visible:outline-3 disabled:opacity-60"
                 >
                     {markingAll ? MARKING_LABEL : MARK_ALL_LABEL}
                 </button>

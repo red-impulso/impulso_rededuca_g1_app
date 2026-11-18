@@ -69,7 +69,7 @@ function TeacherDetailContent({ id }: { id: string }) {
                     onRemoveSubject={setRemoving}
                     actions={
                         <>
-                            <button type="button" onClick={() => setEditing(true)} className={`${BUTTON} bg-blue text-white hover:bg-blue/90`}>{EDIT_TEACHER_LABEL}</button>
+                            <button type="button" onClick={() => setEditing(true)} className={`${BUTTON} bg-blue text-on-color hover:bg-blue/90`}>{EDIT_TEACHER_LABEL}</button>
                             <Link href={firstCourse ? `/docentes/asignacion?curso=${firstCourse.id}` : "/docentes/asignacion"} className={`${BUTTON} border border-line bg-surface text-ink hover:bg-page`}>{ASSIGN_SUBJECTS_LABEL}</Link>
                         </>
                     }

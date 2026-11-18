@@ -61,3 +61,7 @@ export const EMAIL_TEXT = "Ingresa un correo válido, por ejemplo nombre@dominio
 export const PHONE_TEXT = "El teléfono debe tener 10 dígitos.";
 export const ADDRESS_TEXT = "Máximo 120 caracteres.";
 export const REQUIRED_TEXT = "Este campo es obligatorio.";
+export const MARKING_PRIMARY_LABEL = "Marcando…";
+export const COPY_EMAIL_LABEL = "Copiar email";
+export const EMAIL_COPIED_TEXT = "Email copiado";
+export const COPY_EMAIL_ERROR_TEXT = "No se pudo copiar el email.";

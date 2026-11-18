@@ -23,13 +23,14 @@ export function bellAriaLabel(count: number): string {
 // A partir de este número se muestra "99+"
 export const BADGE_MAX = 99;
 // UX pide rojo #DC2626; se usa el rojo que ya existe (bg-error)
-export const BADGE_CLASS = "bg-error text-white";
+export const BADGE_CLASS = "bg-error text-on-color";
 
 // ---- Pendiente UX: campanita en el header (posición, tamaño y estados) ----
 // Ícono propio en SVG (sin librería de íconos). 44 × 44 px de área táctil.
-export const BELL_CLASS = "text-ink hover:bg-page";
+// Va sobre el header "medio" (degradé claro; en oscuro, petróleo)
+export const BELL_CLASS = "text-ink hover:bg-white/50 dark:hover:bg-white/10";
 // Cuando se está en la bandeja
-export const BELL_ACTIVE_CLASS = "bg-page text-ink";
+export const BELL_ACTIVE_CLASS = "bg-white/60 text-ink dark:bg-white/10";
 
 // ---- Pendiente UX: marca de "No leído" (siempre con texto, no solo color) ----
 export const UNREAD_LABEL = "No leído";
