@@ -13,7 +13,11 @@ export default function PanelLayout({ children }: { children: ReactNode }) {
             <SessionProvider>
                 <NotificationsProvider>
                     <AppHeader />
-                    <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">{children}</main>
+                    {/* Fondo que sube oscuro desde el footer (--panel-bg). El pb-32 deja libre
+                        la franja oscura, así el texto fuera de tarjetas no cae sobre ella. */}
+                    <div className="flex flex-1 flex-col bg-panel">
+                        <main className="mx-auto w-full max-w-6xl flex-1 px-4 pt-8 pb-32">{children}</main>
+                    </div>
                 </NotificationsProvider>
             </SessionProvider>
         </QueryProvider>

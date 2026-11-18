@@ -41,7 +41,7 @@ export function Modal({ open, onOpenChange, title, description, children }: Moda
             }}
         >
             <Dialog.Portal>
-                <Dialog.Overlay className="fixed inset-0 z-40 bg-ink/50" />
+                <Dialog.Overlay className="fixed inset-0 z-40 bg-overlay/50" />
                 <Dialog.Content
                     onFocus={keepFieldVisible}
                     className="fixed inset-x-0 bottom-0 z-50 max-h-[92dvh] overflow-y-auto overscroll-contain rounded-t-[20px] border border-line bg-surface p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] text-ink shadow-xl outline-none lg:inset-x-auto lg:top-1/2 lg:bottom-auto lg:left-1/2 lg:w-full lg:max-w-lg lg:-translate-x-1/2 lg:-translate-y-1/2 lg:rounded-2xl lg:p-6"

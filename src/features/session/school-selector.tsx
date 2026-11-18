@@ -76,14 +76,14 @@ export function SchoolSelector() {
             <Dialog.Root open={open} onOpenChange={setOpen}>
                 <Dialog.Trigger
                     aria-haspopup="dialog"
-                    className={`flex min-h-11 max-w-[218px] items-center gap-1 rounded-[10px] border px-2 text-left text-xs outline-blue/40 focus-visible:outline-3 md:max-w-[280px] lg:max-w-[340px] ${failed ? "border-error text-error" : "border-transparent text-muted hover:bg-page"}`}
+                    className={`flex min-h-11 max-w-[218px] items-center gap-1 rounded-[10px] border px-2 text-left text-xs outline-blue/40 focus-visible:outline-3 md:max-w-[280px] lg:max-w-[340px] ${failed ? "border-error text-error" : "border-transparent text-muted hover:bg-white/50 dark:hover:bg-white/10"}`}
                 >
                     <span className="truncate">{failed ? "No pudimos cambiar" : active.institutionName}</span>
                     <span aria-hidden="true">▾</span>
                     <span className="sr-only">Cambiar de escuela</span>
                 </Dialog.Trigger>
                 <Dialog.Portal>
-                    <Dialog.Overlay className="fixed inset-0 z-40 bg-ink/50" />
+                    <Dialog.Overlay className="fixed inset-0 z-40 bg-overlay/50" />
                     <Dialog.Content className="fixed inset-x-0 bottom-0 z-50 flex max-h-[92dvh] flex-col rounded-t-[20px] border border-line bg-surface p-5 text-ink shadow-xl outline-none md:inset-x-auto md:top-20 md:bottom-auto md:left-4 md:w-[470px] md:rounded-2xl">
                         <div className="mb-3 flex items-start justify-between gap-3">
                             <div>
@@ -124,7 +124,7 @@ function SwitchProgress({ onRetry, onCancel }: { onRetry: () => void; onCancel: 
     const { state } = useInstitutionSwitch();
     if (state.phase === "idle") return null;
     return (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/50 md:items-center">
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-overlay/50 md:items-center">
             <div role="dialog" aria-modal="true" aria-labelledby="cambio-escuela-titulo" className="w-full rounded-t-[20px] bg-surface p-6 text-ink md:max-w-[440px] md:rounded-2xl">
                 <div className="mb-3 flex items-center gap-3">
                     <SchoolLogo name={state.target.institutionName} />
@@ -148,7 +148,7 @@ function SwitchProgress({ onRetry, onCancel }: { onRetry: () => void; onCancel: 
                         <p role="alert" className="rounded-[10px] bg-error-bg px-4 py-3 text-sm text-error">{state.message}</p>
                         <div className="mt-4 flex justify-end gap-2">
                             <button type="button" onClick={onCancel} className="h-11 rounded-[10px] border border-line px-4 font-semibold">Cancelar</button>
-                            <button type="button" onClick={onRetry} className="h-11 rounded-[10px] bg-blue px-4 font-semibold text-white">Reintentar</button>
+                            <button type="button" onClick={onRetry} className="h-11 rounded-[10px] bg-blue px-4 font-semibold text-on-color">Reintentar</button>
                         </div>
                     </>
                 )}

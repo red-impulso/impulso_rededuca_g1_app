@@ -77,7 +77,7 @@ export function SaveBar({
                         type="button"
                         onClick={onSave}
                         disabled={!canSave}
-                        className={`${BUTTON_STYLES} flex-[2] bg-blue text-white hover:bg-blue/90 disabled:bg-line disabled:text-muted lg:flex-none`}
+                        className={`fx-lift-glow fx-glow-blue ${BUTTON_STYLES} flex-[2] bg-blue text-on-color hover:bg-blue/90 disabled:bg-line disabled:text-muted lg:flex-none`}
                     >
                         {saving ? "Guardando…" : "Guardar cambios"}
                     </button>

@@ -54,7 +54,7 @@ export function TextField({ id, label, help, error, className = "", ...input }: 
                 id={id}
                 aria-invalid={error ? true : undefined}
                 aria-describedby={describedBy(id, help, error)}
-                className={`${CONTROL_STYLES} ${borderOf(error)}`}
+                className={`${CONTROL_STYLES} ${borderOf(error)} read-only:bg-page read-only:text-muted`}
                 {...input}
             />
             <FieldFooter id={id} help={help} error={error} />

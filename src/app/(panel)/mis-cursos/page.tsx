@@ -63,7 +63,7 @@ export default function MyCoursesPage() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="inline-flex min-h-11 items-center rounded-[10px] bg-blue px-4 text-sm font-semibold text-white outline-blue/40 hover:bg-blue/90 focus-visible:outline-3"
+                className="inline-flex min-h-11 items-center rounded-[10px] bg-blue px-4 text-sm font-semibold text-on-color outline-blue/40 hover:bg-blue/90 focus-visible:outline-3"
               >
                 {link.label}
               </Link>

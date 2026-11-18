@@ -50,7 +50,7 @@ function ChildrenList() {
                         {/* Avatar con la inicial (decorativo: el nombre está al lado) */}
                         <span
                             aria-hidden="true"
-                            className="flex size-12 shrink-0 items-center justify-center rounded-full bg-ink font-semibold text-white"
+                            className="flex size-12 shrink-0 items-center justify-center rounded-full bg-ink font-semibold text-surface"
                         >
                             {student.firstName.charAt(0).toUpperCase()}
                         </span>

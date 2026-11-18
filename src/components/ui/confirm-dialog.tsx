@@ -14,6 +14,10 @@ type ConfirmDialogProps = {
   loading?: boolean;
   // Texto del botón de confirmar mientras carga (por ejemplo "Publicando…")
   loadingLabel?: string;
+  // Aviso que explica por qué no se puede (o conviene) confirmar
+  warning?: string;
+  // Deshabilita el botón de confirmar (por ejemplo, un curso con estudiantes)
+  confirmDisabled?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
 };
@@ -28,6 +32,8 @@ export function ConfirmDialog({
   destructive = false,
   loading = false,
   loadingLabel,
+  warning,
+  confirmDisabled = false,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
@@ -74,13 +80,18 @@ export function ConfirmDialog({
           onCancel();
         }
       }}
-      className="m-auto w-[calc(100%-2rem)] max-w-sm rounded-xl border border-line bg-surface p-0 text-ink backdrop:bg-ink/50"
+      className="m-auto w-[calc(100%-2rem)] max-w-sm rounded-xl border border-line bg-surface p-0 text-ink backdrop:bg-overlay/50"
     >
       <div className="p-6">
         <h2 id={titleId} className="text-lg font-semibold text-ink">
           {title}
         </h2>
         {description && <p className="mt-2 text-sm text-muted">{description}</p>}
+        {warning && (
+          <p role="alert" className="mt-3 rounded-lg bg-warning-bg px-3 py-2 text-sm font-semibold text-warning">
+            {warning}
+          </p>
+        )}
 
         <div className="mt-6 flex flex-wrap gap-3">
           <button
@@ -100,9 +111,9 @@ export function ConfirmDialog({
               markPointer(event);
               onConfirm();
             }}
-            disabled={loading}
+            disabled={loading || confirmDisabled}
             aria-busy={loading}
-            className={`rounded-lg px-4 py-2.5 font-semibold text-white disabled:opacity-60 ${
+            className={`rounded-lg px-4 py-2.5 font-semibold text-on-color disabled:opacity-60 ${
               destructive ? "bg-error" : "bg-brand"
             }`}
           >
