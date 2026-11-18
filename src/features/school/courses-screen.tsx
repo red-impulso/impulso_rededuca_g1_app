@@ -43,13 +43,14 @@ import {
     NO_RESULTS_TEXT,
     NO_RESULTS_TITLE,
     TEACHER_ASSIGNED_TEXT,
+    courseHasStudentsText,
     deleteCourseTitle,
 } from "./school-texts";
 import type { Course, CourseFilters } from "./types";
 import { errorInfo, useCourses, useDeleteCourse } from "./use-school-data";
 
 const PRIMARY_BUTTON =
-    "inline-flex h-11 items-center justify-center gap-2 rounded-[10px] bg-blue px-4 font-semibold text-white outline-blue/40 hover:bg-blue/90 focus-visible:outline-3";
+    "inline-flex h-11 items-center justify-center gap-2 rounded-[10px] bg-blue px-4 font-semibold text-on-color outline-blue/40 hover:bg-blue/90 focus-visible:outline-3";
 
 function Header({ subtitle, onCreate }: { subtitle?: string; onCreate?: () => void }) {
     return (
@@ -89,6 +90,8 @@ function CoursesContent() {
         [router, pathname],
     );
     const close = () => setDialog({ type: "none" });
+    // Estudiantes del curso a eliminar (null = dato desconocido: decide Back con 409)
+    const deleteStudents = dialog.type === "delete" ? (dialog.course.studentsCount ?? 0) : 0;
 
     if (courses.isPending) {
         return (
@@ -214,8 +217,10 @@ function CoursesContent() {
                 confirmLabel={DELETE_LABEL}
                 destructive
                 loading={remove.isPending}
+                warning={deleteStudents > 0 ? courseHasStudentsText(deleteStudents) : undefined}
+                confirmDisabled={deleteStudents > 0}
                 onConfirm={() => {
-                    if (dialog.type !== "delete") return;
+                    if (dialog.type !== "delete" || deleteStudents > 0) return;
                     remove.mutate(dialog.course.id, {
                         onSuccess: () => {
                             close();

@@ -6,7 +6,7 @@ import { errorInfo } from "../school/use-school-data";
 import { LoadMeter } from "./load-meter";
 import { TeacherAvatar } from "./teachers-list";
 import { availability } from "./teachers-rules";
-import { AVAILABILITY_LABELS, LICENSE_WARNING_TEXT, SEARCHING_CANDIDATES_TEXT, TEACHERS_ERROR_TEXT, overLimitText } from "./teachers-texts";
+import { AVAILABILITY_LABELS, INACTIVE_REASON_TEXT, LICENSE_WARNING_TEXT, SEARCHING_CANDIDATES_TEXT, TEACHERS_ERROR_TEXT, overLimitText } from "./teachers-texts";
 import type { AssignmentRow, TeacherCandidate } from "./types";
 import { useCandidates } from "./use-teachers-data";
 
@@ -29,7 +29,7 @@ export function CandidatePanel({ courseId, row, extraHours, onClose, onChoose }:
     return (
         <Dialog.Root open={row !== null} onOpenChange={(open) => !open && onClose()}>
             <Dialog.Portal>
-                <Dialog.Overlay className="fixed inset-0 z-40 bg-ink/50" />
+                <Dialog.Overlay className="fixed inset-0 z-40 bg-overlay/50" />
                 <Dialog.Content className="fixed inset-x-0 bottom-0 z-50 flex max-h-[92dvh] flex-col rounded-t-[20px] border border-line bg-surface p-5 text-ink shadow-xl outline-none lg:inset-y-0 lg:right-0 lg:left-auto lg:max-h-none lg:w-[440px] lg:rounded-none lg:rounded-l-2xl">
                     <div className="mb-4 flex items-start justify-between gap-3">
                         <div>
@@ -66,10 +66,11 @@ export function CandidatePanel({ courseId, row, extraHours, onClose, onChoose }:
                                             </div>
                                             <div className="mt-2"><LoadMeter hours={candidate.weeklyHours + extra} max={candidate.maxWeeklyHours} /></div>
                                             <p className="mt-1 text-xs text-muted">Carga resultante: {resulting} hs</p>
+                                            {state === "unavailable" && <p className="mt-1 text-sm text-muted">{INACTIVE_REASON_TEXT}</p>}
                                             {state === "conflict" && <p className="mt-1 text-sm text-error">{candidate.conflict}</p>}
                                             {state === "over-limit" && <p className="mt-1 text-sm text-error">{overLimitText(resulting, candidate.maxWeeklyHours)}</p>}
                                             {candidate.status === "licencia" && state === "available" && <p className="mt-1 text-sm text-warning">{LICENSE_WARNING_TEXT}</p>}
-                                            <button type="button" disabled={state !== "available" || current} onClick={() => onChoose(candidate)} className="mt-2 h-11 w-full rounded-[10px] bg-blue px-4 text-sm font-semibold text-white outline-blue/40 hover:bg-blue/90 focus-visible:outline-3 disabled:bg-line disabled:text-muted">
+                                            <button type="button" disabled={state !== "available" || current} onClick={() => onChoose(candidate)} className="mt-2 h-11 w-full rounded-[10px] bg-blue px-4 text-sm font-semibold text-on-color outline-blue/40 hover:bg-blue/90 focus-visible:outline-3 disabled:bg-line disabled:text-muted">
                                                 {current ? "Asignado" : "Asignar"}
                                             </button>
                                         </li>

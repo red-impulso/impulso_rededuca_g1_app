@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { Controller, useForm } from "react-hook-form";
 import type { FieldErrors } from "react-hook-form";
@@ -108,10 +108,12 @@ type SchoolFormProps = {
     saveError: ErrorInfo | null;
     // true después de guardar bien (se oculta al volver a editar)
     saved: boolean;
-    // Devuelve true si se guardó
-    onSave: (values: SchoolFormValues) => Promise<boolean>;
+    // Devuelve la escuela guardada según Back (null si falló)
+    onSave: (values: SchoolFormValues) => Promise<School | null>;
     // dirty = hay cambios sin guardar
     onCancel: (dirty: boolean) => void;
+    // Avisa si hay cambios sin guardar (para frenar la salida de la pantalla)
+    onDirtyChange?: (dirty: boolean) => void;
     logoUploading: boolean;
     logoError: string | null;
     onLogoChange: (file: File) => void;
@@ -126,6 +128,7 @@ export function SchoolForm({
     saved,
     onSave,
     onCancel,
+    onDirtyChange,
     logoUploading,
     logoError,
     onLogoChange,
@@ -145,6 +148,10 @@ export function SchoolForm({
     // En celular: Datos institucionales abierta; Contacto y Configuración cerradas
     const [open, setOpen] = useState<Record<SectionKey, boolean>>({ institutional: true, contact: false, config: false });
 
+    useEffect(() => {
+        onDirtyChange?.(isDirty);
+    }, [isDirty, onDirtyChange]);
+
     const toggle = (key: SectionKey) => setOpen((current) => ({ ...current, [key]: !current[key] }));
 
     // Al guardar con errores se abren las secciones que los tienen
@@ -159,7 +166,10 @@ export function SchoolForm({
     }
 
     const submit = handleSubmit(async (values) => {
-        if (await onSave(values)) reset(values);
+        // Se rehidrata con la respuesta de Back: lo que se ve es lo que quedó guardado
+        // y "Restaurar valores" vuelve a esos mismos valores
+        const fresh = await onSave(values);
+        if (fresh) reset(schoolToValues(fresh, now));
     }, handleInvalid);
 
     // Ocupado desde el primer clic (isSubmitting) hasta que responde Back (saving)
@@ -383,7 +393,7 @@ export function SchoolForm({
                     <button
                         type="submit"
                         disabled={busy}
-                        className={`${BUTTON_STYLES} flex-[2] bg-blue text-white hover:bg-blue/90 lg:flex-none`}
+                        className={`fx-lift-glow fx-glow-blue ${BUTTON_STYLES} flex-[2] bg-blue text-on-color hover:bg-blue/90 lg:flex-none`}
                     >
                         {busy ? SAVING_LABEL : SAVE_LABEL}
                     </button>

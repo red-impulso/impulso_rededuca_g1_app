@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { LABEL_STYLES, CONTROL_STYLES } from "@/components/ui/form-fields";
@@ -8,6 +8,7 @@ import { Modal } from "@/components/ui/modal";
 import { SkeletonLines } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast";
 import { CANCEL_LABEL, EMPTY_VALUE } from "../school/school-texts";
+import { contactSubject } from "../students/students-texts";
 import { errorInfo } from "../school/use-school-data";
 import { ACTION, GuardianCard, PRIMARY_BUTTON } from "./guardian-card";
 import { GuardianFormDialog } from "./guardian-form-dialog";
@@ -34,6 +35,7 @@ import {
     unlinkTitle,
 } from "./guardians-texts";
 import type { GuardianLink } from "./types";
+import { useCopyEmail } from "./use-copy-email";
 import { useGuardianLinks, useMakePrimary, useUnlinkGuardian } from "./use-guardians-data";
 
 function UnlinkDialog({ link, links, studentId, onClose, onDone }: { link: GuardianLink; links: GuardianLink[]; studentId: string; onClose: () => void; onDone: () => void }) {
@@ -63,7 +65,7 @@ function UnlinkDialog({ link, links, studentId, onClose, onDone }: { link: Guard
                             type="button"
                             disabled={unlink.isPending}
                             onClick={() => unlink.mutate({ guardianMembershipId: link.guardianMembershipId, newPrimaryId: rule.kind === "choose-primary" ? newPrimaryId : null }, { onSuccess: onDone })}
-                            className="h-11 flex-1 rounded-[10px] bg-error px-4 font-semibold text-white disabled:opacity-60 lg:flex-none"
+                            className="h-11 flex-1 rounded-[10px] bg-error px-4 font-semibold text-on-color disabled:opacity-60 lg:flex-none"
                         >
                             {unlink.isPending ? "Desvinculando…" : UNLINK_LABEL}
                         </button>
@@ -85,10 +87,13 @@ function Group({ title, links, render }: { title: string; links: GuardianLink[];
 }
 
 // Tutores dentro de la ficha del alumno (SDD M9)
-export function GuardiansSection({ studentId }: { studentId: string }) {
+export function GuardiansSection({ studentId, studentName }: { studentId: string; studentName: string }) {
     const links = useGuardianLinks(studentId);
     const makePrimary = useMakePrimary(studentId);
     const { showToast } = useToast();
+    const copyEmail = useCopyEmail();
+    // Candado: un doble toque no manda dos pedidos antes de que isPending sea true (QA-M9-09)
+    const primaryLock = useRef(false);
     const [showInactive, setShowInactive] = useState(false);
     const [form, setForm] = useState<{ link: GuardianLink | null } | null>(null);
     const [unlinking, setUnlinking] = useState<GuardianLink | null>(null);
@@ -105,14 +110,22 @@ export function GuardiansSection({ studentId }: { studentId: string }) {
             key={link.guardianMembershipId}
             link={link}
             busy={makePrimary.isPending}
+            marking={makePrimary.isPending && makePrimary.variables === link.guardianMembershipId}
+            contactSubject={contactSubject(studentName)}
+            onCopyEmail={copyEmail}
             onEdit={() => setForm({ link })}
             onUnlink={() => setUnlinking(link)}
-            onMakePrimary={() =>
+            onMakePrimary={() => {
+                if (primaryLock.current) return;
+                primaryLock.current = true;
                 makePrimary.mutate(link.guardianMembershipId, {
                     onSuccess: () => showToast(GUARDIAN_PRIMARY_TEXT),
                     onError: (error) => showToast(errorInfo(error, GUARDIAN_ACTION_ERROR_TEXT).message),
-                })
-            }
+                    onSettled: () => {
+                        primaryLock.current = false;
+                    },
+                });
+            }}
         />
     );
 
@@ -144,6 +157,7 @@ export function GuardiansSection({ studentId }: { studentId: string }) {
                 open={form !== null}
                 studentId={studentId}
                 link={form?.link ?? null}
+                links={all}
                 suggestPrimary={!hasPrimary}
                 onOpenChange={(open) => !open && setForm(null)}
                 onSaved={(created) => {

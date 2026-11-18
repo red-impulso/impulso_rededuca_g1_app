@@ -43,7 +43,7 @@ import type { AssignmentRow } from "./types";
 import { useCourseAssignmentRows, useSaveAssignments } from "./use-teachers-data";
 
 const BUTTON = "inline-flex h-11 items-center justify-center rounded-[10px] px-4 text-sm font-semibold outline-blue/40 focus-visible:outline-3 disabled:opacity-60";
-const PRIMARY = `${BUTTON} bg-blue text-white hover:bg-blue/90`;
+const PRIMARY = `${BUTTON} bg-blue text-on-color hover:bg-blue/90`;
 const SECONDARY = `${BUTTON} border border-line bg-surface text-ink hover:bg-page`;
 const LINK = "inline-flex min-h-11 items-center rounded-[10px] px-3 text-sm font-semibold text-blue outline-blue/40 hover:bg-page focus-visible:outline-3";
 
@@ -168,7 +168,7 @@ function CourseAssignments({
                     <span className="text-sm font-semibold text-ink">{pendingChangesText(pending)}</span>
                     <div className="flex gap-2">
                         <button type="button" onClick={() => updateChanges({})} disabled={saving} className={SECONDARY}>{DISCARD_LABEL}</button>
-                        <button type="button" onClick={submit} disabled={saving} className={PRIMARY}>{saving ? "Guardando…" : SAVE_ASSIGNMENTS_LABEL}</button>
+                        <button type="button" onClick={submit} disabled={saving} className={`fx-lift-glow fx-glow-blue ${PRIMARY}`}>{saving ? "Guardando…" : SAVE_ASSIGNMENTS_LABEL}</button>
                     </div>
                 </div>
             )}

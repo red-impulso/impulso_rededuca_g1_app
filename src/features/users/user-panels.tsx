@@ -14,7 +14,7 @@ function Sheet({ open, onClose, title, description, children }: { open: boolean;
     return (
         <Dialog.Root open={open} onOpenChange={(value) => !value && onClose()}>
             <Dialog.Portal>
-                <Dialog.Overlay className="fixed inset-0 z-40 bg-ink/50" />
+                <Dialog.Overlay className="fixed inset-0 z-40 bg-overlay/50" />
                 <Dialog.Content className="fixed inset-x-0 bottom-0 z-50 flex max-h-[92dvh] flex-col overflow-y-auto rounded-t-[20px] border border-line bg-surface p-5 text-ink shadow-xl outline-none md:inset-y-0 md:right-0 md:left-auto md:max-h-none md:w-[440px] md:rounded-none md:rounded-l-2xl lg:w-[520px]">
                     <div className="mb-4 flex items-start justify-between gap-3">
                         <div>
@@ -74,7 +74,7 @@ export function UserDetailPanel({ user, schoolName, onClose, onAction }: { user:
                         </div>
                     </section>
                     <div className="flex flex-wrap gap-2">
-                        <button type="button" onClick={() => onAction("edit", user)} className="h-11 rounded-[10px] bg-blue px-4 font-semibold text-white">Editar</button>
+                        <button type="button" onClick={() => onAction("edit", user)} className="h-11 rounded-[10px] bg-blue px-4 font-semibold text-on-color">Editar</button>
                         <button type="button" onClick={() => onAction("reset", user)} className="h-11 rounded-[10px] border border-line px-4 font-semibold">{USER_MENU.reset[0]}</button>
                         {user.status === "inactive" ? (
                             <button type="button" onClick={() => onAction("activate", user)} className="h-11 rounded-[10px] border border-line px-4 font-semibold">{USER_MENU.activate[0]}</button>

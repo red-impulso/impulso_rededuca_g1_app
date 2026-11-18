@@ -97,9 +97,11 @@ export function isLastAdmin(user: UserRow, rows: UserRow[]): boolean {
 
 // true si la acción (baja o cambio a otro rol) dejaría a la escuela sin administradores activos.
 // activeAdmins = total real que manda Back; si todavía no llegó, se usa lo que se ve en la lista.
+// El total de Back (status=active) no cuenta los "activo" heredados de M8: nunca se usa uno menor que lo visible.
 export function removesLastAdmin(users: UserRow[], activeAdmins: number | null, rows: UserRow[]): boolean {
     const affected = users.filter((user) => user.role === "admin" && user.status === "active");
     if (affected.length === 0) return false;
-    const total = activeAdmins ?? rows.filter((row) => row.role === "admin" && row.status === "active").length;
+    const visible = rows.filter((row) => row.role === "admin" && row.status === "active").length;
+    const total = Math.max(activeAdmins ?? 0, visible);
     return affected.length >= total;
 }

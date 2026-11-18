@@ -22,7 +22,7 @@ import {
     teachersListPath,
 } from "./teachers-api";
 import type { PendingChanges } from "./teachers-rules";
-import { toTeacherCreate, toTeacherPatch } from "./teachers-schemas";
+import { toTeacherCreate, toTeacherEditPatch } from "./teachers-schemas";
 import type { TeacherFormValues } from "./teachers-schemas";
 import type { TeacherFilters, TeacherStatus } from "./types";
 
@@ -101,13 +101,13 @@ export function useCandidates(courseId: string, subjectId: string | null) {
     });
 }
 
-// Alta: POST /teachers. Edición: PATCH /teachers/:id (también nombre, correo y teléfono).
+// Alta: POST /teachers. Edición: PATCH /teachers/:id (nombre, teléfono y datos laborales; legajo y correo quedan fijos).
 export function useSaveTeacher() {
     const invalidate = useInvalidate();
     return useMutation({
         mutationFn: async ({ id, values }: { id: string | null; values: TeacherFormValues }) => {
             if (id) {
-                await apiFetch<unknown>(teacherPath(id), json("PATCH", { ...toTeacherPatch(values), fullName: values.fullName.trim(), email: values.email.trim(), phone: values.phone.trim() || null }));
+                await apiFetch<unknown>(teacherPath(id), json("PATCH", toTeacherEditPatch(values)));
                 return id;
             }
             const created = await apiFetch<{ id?: unknown; membershipId?: unknown }>(TEACHERS_PATH, json("POST", toTeacherCreate(values)));

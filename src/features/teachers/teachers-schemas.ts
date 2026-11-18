@@ -17,6 +17,9 @@ export const teacherSchema = z.object({
 
 export type TeacherFormValues = z.infer<typeof teacherSchema>;
 
+// Edición (M8-N03): legajo y correo quedan fijos, así que no se validan (un dato viejo no traba el guardado)
+export const teacherEditSchema = teacherSchema.extend({ email: z.string(), fileNumber: z.string() });
+
 export function teacherToValues(teacher: TeacherDetail | null): TeacherFormValues {
     return {
         fullName: teacher?.fullName ?? "",
@@ -41,6 +44,20 @@ export function toTeacherPatch(values: TeacherFormValues) {
         status: values.status,
         maxWeeklyHours: Number(values.maxWeeklyHours),
         hiredAt: values.hiredAt || undefined,
+    };
+}
+
+// Edición: PATCH /teachers/:id sin legajo ni correo (M8-N03: no se cambian al editar).
+// phone va en null si se vació, para que Back lo borre.
+export function toTeacherEditPatch(values: TeacherFormValues) {
+    const patch = toTeacherPatch(values);
+    return {
+        fullName: values.fullName.trim(),
+        phone: values.phone.trim() || null,
+        employmentStatus: patch.employmentStatus,
+        status: patch.status,
+        maxWeeklyHours: patch.maxWeeklyHours,
+        hiredAt: patch.hiredAt,
     };
 }
 

@@ -8,6 +8,15 @@ export const USERS_PATH = "/users";
 export const USERS_PAGE_SIZE = 25;
 export const ROLES: Role[] = ["admin", "director", "teacher", "guardian"];
 const STATUSES: UserStatus[] = ["active", "inactive", "pending", "blocked"];
+// Back guarda en la misma columna los estados heredados de M8 (estado laboral docente).
+// Para Back "activo" y "licencia" son membresía vigente (ACTIVE_MEMBERSHIP_STATUSES).
+const LEGACY_STATUSES: Record<string, UserStatus> = { activo: "active", licencia: "active", inactivo: "inactive" };
+
+export function parseUserStatus(value: unknown): UserStatus | null {
+    if (typeof value !== "string") return null;
+    if (STATUSES.includes(value as UserStatus)) return value as UserStatus;
+    return LEGACY_STATUSES[value] ?? null;
+}
 
 // La búsqueda ignora puntos y espacios del documento (SDD 8.2)
 export function normalizeQuery(q: string): string {
@@ -62,7 +71,7 @@ export function parseUserRow(value: unknown): UserRow | null {
         membershipId: value.membershipId,
         userId: text(value.userId) ?? "",
         role: value.role,
-        status: STATUSES.includes(value.status as UserStatus) ? (value.status as UserStatus) : null,
+        status: parseUserStatus(value.status),
         fullName: text(profile.fullName) ?? [firstName, lastName].filter(Boolean).join(" "),
         firstName,
         lastName,

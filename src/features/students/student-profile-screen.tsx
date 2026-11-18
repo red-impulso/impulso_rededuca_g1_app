@@ -1,22 +1,25 @@
 "use client";
 
-import { openPendingTab } from "@/lib/pending-tab";
+import { downloadFileName, saveBlob } from "@/lib/verified-download";
 import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { SkeletonLines } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast";
 import { useSession } from "@/features/session/use-session";
+import { groupGuardians } from "../guardians/guardians-rules";
 import { GuardiansSection } from "../guardians/guardians-section";
+import { useCopyEmail } from "../guardians/use-copy-email";
+import { useGuardianLinks } from "../guardians/use-guardians-data";
 import { canManageSchool } from "../school/school-rules";
 import { FORBIDDEN_TEXT } from "../school/school-texts";
 import { errorInfo } from "../school/use-school-data";
 import { StudentFormDialog } from "./student-form-dialog";
 import { StudentProfileView } from "./student-profile";
 import type { ActivityState } from "./student-profile";
-import { phoneHref, studentName } from "./students-rules";
+import { mailtoHref, studentName } from "./students-rules";
 import {
     ACTIVITY_LOAD_ERROR_TEXT,
     CONTACT_GUARDIAN_LABEL,
@@ -27,10 +30,12 @@ import {
     NO_GUARDIAN_CONTACT_TEXT,
     PROFILE_LOAD_ERROR_TEXT,
     PROFILE_TABS,
+    REPORT_DOWNLOADED_TEXT,
     REPORT_ERROR_TEXT,
     STUDENT_DELETE_ERROR_TEXT,
     STUDENT_DELETED_TEXT,
     STUDENT_UPDATED_TEXT,
+    contactSubject,
     deleteStudentTitle,
 } from "./students-texts";
 import { useDeleteStudent, useStudentActivity, useStudentProfile, useStudentReport } from "./use-students-data";
@@ -44,8 +49,12 @@ function ProfileContent({ studentId }: { studentId: string }) {
     const { showToast } = useToast();
     const profile = useStudentProfile(studentId);
     const activity = useStudentActivity(studentId);
+    // Misma consulta que la pestaña Tutores: el parentesco y el principal real vienen de ahí (QA-M9-02)
+    const guardianLinks = useGuardianLinks(studentId);
+    const copyEmail = useCopyEmail();
     const report = useStudentReport();
     const remove = useDeleteStudent();
+    const reportLock = useRef(false);
     const [tab, setTab] = useState<Tab>("summary");
     const [editing, setEditing] = useState(false);
     const [deleting, setDeleting] = useState(false);
@@ -58,31 +67,38 @@ function ProfileContent({ studentId }: { studentId: string }) {
 
     const data = profile.data;
     const name = studentName(data.personal);
-    const guardian = data.guardians.find((item) => item.phone || item.email);
-    const contactHref = guardian ? (phoneHref(guardian.phone) ?? `mailto:${guardian.email}`) : null;
+    // «Contactar tutor»: correo del principal o, si no tiene, del siguiente tutor activo (QA-M9-03)
+    const links = guardianLinks.data ?? null;
+    const groups = links ? groupGuardians(links, false) : null;
+    const contacts = groups ? [...groups.primary, ...groups.secondary, ...groups.others] : data.guardians;
+    const contactHref = mailtoHref(contacts.find((item) => item.email)?.email ?? null, contactSubject(name));
     const activityState: ActivityState = activity.isPending
         ? { status: "loading" }
         : activity.isError
           ? { status: "error", message: errorInfo(activity.error, ACTIVITY_LOAD_ERROR_TEXT).message, onRetry: () => void activity.refetch() }
           : { status: "ready", data: activity.data };
 
-    // La pestaña se abre en el mismo clic (si no, el navegador la bloquea) y recibe la dirección después
+    // El informe se descarga solo si el archivo existe; si falla, avisa sin abrir pestañas (QA-M7-05).
+    // El candado evita un segundo pedido por doble toque antes de que isPending sea true.
     const generateReport = () => {
-        if (report.isPending) return;
-        const tab = openPendingTab();
+        if (reportLock.current || report.isPending) return;
+        reportLock.current = true;
         report.mutate(studentId, {
-            onSuccess: (url) => tab.open(url),
-            onError: (error) => {
-                tab.close();
-                showToast(`${REPORT_ERROR_TEXT} ${errorInfo(error, "").message}`.trim());
+            onSuccess: (blob) => {
+                saveBlob(blob, downloadFileName("informe", name, "csv"));
+                showToast(REPORT_DOWNLOADED_TEXT);
+            },
+            onError: () => showToast(REPORT_ERROR_TEXT),
+            onSettled: () => {
+                reportLock.current = false;
             },
         });
     };
 
     const actions = (
         <>
-            <button type="button" onClick={() => setEditing(true)} className={`${BUTTON} bg-blue text-white hover:bg-blue/90`}>{EDIT_STUDENT_LABEL}</button>
-            <button type="button" onClick={generateReport} disabled={report.isPending} className={SECONDARY}>{report.isPending ? GENERATING_REPORT_LABEL : GENERATE_REPORT_LABEL}</button>
+            <button type="button" onClick={() => setEditing(true)} className={`${BUTTON} bg-blue text-on-color hover:bg-blue/90`}>{EDIT_STUDENT_LABEL}</button>
+            <button type="button" onClick={generateReport} disabled={report.isPending} aria-busy={report.isPending} className={SECONDARY}>{report.isPending ? GENERATING_REPORT_LABEL : GENERATE_REPORT_LABEL}</button>
             {contactHref ? (
                 <a href={contactHref} className={SECONDARY}>{CONTACT_GUARDIAN_LABEL}</a>
             ) : (
@@ -111,7 +127,7 @@ function ProfileContent({ studentId }: { studentId: string }) {
                 ))}
             </div>
             <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
-                {tab === "summary" ? <StudentProfileView profile={data} activity={activityState} actions={actions} /> : <GuardiansSection studentId={studentId} />}
+                {tab === "summary" ? <StudentProfileView profile={data} activity={activityState} actions={actions} guardianLinks={links} onCopyEmail={copyEmail} /> : <GuardiansSection studentId={studentId} studentName={name} />}
             </div>
             <StudentFormDialog
                 open={editing}

@@ -136,3 +136,11 @@ export function phoneHref(phone: string | null): string | null {
     const digits = phone.replace(/[^\d+]/g, "");
     return digits ? `tel:${digits}` : null;
 }
+
+// mailto: con el correo y el asunto codificados (QA-M9-03). Sin correo, null.
+export function mailtoHref(email: string | null, subject?: string): string | null {
+    const address = email?.trim();
+    if (!address) return null;
+    const to = encodeURIComponent(address).replace(/%40/g, "@");
+    return subject ? `mailto:${to}?subject=${encodeURIComponent(subject)}` : `mailto:${to}`;
+}

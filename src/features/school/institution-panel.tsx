@@ -43,7 +43,7 @@ export function InstitutionPanel({ school, now = new Date(), uploading, error, o
             ) : (
                 <span
                     aria-hidden="true"
-                    className="flex h-24 w-24 items-center justify-center rounded-2xl bg-ink text-4xl font-semibold text-white"
+                    className="flex h-24 w-24 items-center justify-center rounded-2xl bg-ink text-4xl font-semibold text-surface"
                 >
                     {schoolInitial(school.name)}
                 </span>

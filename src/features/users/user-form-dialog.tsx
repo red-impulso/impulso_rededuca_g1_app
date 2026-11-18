@@ -53,7 +53,7 @@ function UserForm({ user, roleLocked, onCancel, onSaved }: { user: UserRow | nul
             {error && <p role="alert" className={`rounded-[10px] px-4 py-3 text-sm ${error.kind === "offline" ? "bg-warning-bg text-warning" : "bg-error-bg text-error"}`}>{error.message}</p>}
             <div className="flex gap-3 lg:justify-end">
                 <button type="button" onClick={onCancel} disabled={isSubmitting || save.isPending} className={`${BUTTON} border border-line bg-surface text-ink hover:bg-page`}>Cancelar</button>
-                <button type="submit" disabled={isSubmitting || save.isPending} className={`${BUTTON} bg-blue text-white hover:bg-blue/90`}>{isSubmitting || save.isPending ? "Guardando cambios…" : user ? "Guardar" : INVITE_USER_LABEL}</button>
+                <button type="submit" disabled={isSubmitting || save.isPending} className={`fx-lift-glow fx-glow-blue ${BUTTON} bg-blue text-on-color hover:bg-blue/90`}>{isSubmitting || save.isPending ? "Guardando cambios…" : user ? "Guardar" : INVITE_USER_LABEL}</button>
             </div>
         </form>
     );

@@ -48,7 +48,7 @@ import {
 import type { EmploymentStatus, TeacherFilters, TeacherSort, TeacherStatus } from "./types";
 import { useChangeTeacherStatus, useExportTeachers, useImportTeachers, useTeacher, useTeacherCounts, useTeachers } from "./use-teachers-data";
 
-const PRIMARY = "inline-flex h-11 items-center justify-center gap-2 rounded-[10px] bg-blue px-4 font-semibold text-white outline-blue/40 hover:bg-blue/90 focus-visible:outline-3 disabled:opacity-60";
+const PRIMARY = "inline-flex h-11 items-center justify-center gap-2 rounded-[10px] bg-blue px-4 font-semibold text-on-color outline-blue/40 hover:bg-blue/90 focus-visible:outline-3 disabled:opacity-60";
 const SECONDARY = "inline-flex h-11 items-center justify-center rounded-[10px] border border-line bg-surface px-4 text-sm font-semibold text-ink outline-blue/40 hover:bg-page focus-visible:outline-3 disabled:opacity-60";
 
 function Select({ id, label, value, onChange, options }: { id: string; label: string; value: string; onChange: (value: string) => void; options: { value: string; label: string }[] }) {

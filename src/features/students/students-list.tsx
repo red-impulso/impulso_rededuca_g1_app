@@ -70,7 +70,7 @@ function Pagination({ page, limit, total, onPage }: Pick<StudentsListProps, "pag
                                     onClick={() => onPage(item)}
                                     aria-current={item === page ? "page" : undefined}
                                     aria-label={`Página ${item}`}
-                                    className={`${button} ${item === page ? "bg-blue text-white" : "text-ink hover:bg-page"}`}
+                                    className={`${button} ${item === page ? "bg-blue text-on-color" : "text-ink hover:bg-page"}`}
                                 >
                                     {item}
                                 </button>
@@ -112,7 +112,10 @@ export function StudentsList({ students, page, limit, total, onEdit, onPage }: S
                                             {name}
                                         </span>
                                     </th>
-                                    <td className="px-4 py-2 text-ink">{formatDni(student.dni)}</td>
+                                    <td className="px-4 py-2 text-ink">
+                                        {formatDni(student.dni)}
+                                        {student.fileNumber && <span className="block text-xs text-muted">Legajo {student.fileNumber}</span>}
+                                    </td>
                                     <td className="px-4 py-2 text-ink">{student.course?.year != null ? `${student.course.year}° Año` : EMPTY_VALUE}</td>
                                     <td className="px-4 py-2 text-ink">{student.course?.division ?? EMPTY_VALUE}</td>
                                     <td className="px-4 py-2"><StudentStatusBadge status={student.status} /></td>
@@ -141,7 +144,7 @@ export function StudentsList({ students, page, limit, total, onEdit, onPage }: S
             <ul className="flex flex-col gap-3 lg:hidden">
                 {students.map((student) => {
                     const call = phoneHref(student.guardian?.phone ?? null);
-                    const meta = [student.course ? courseLabel(student.course) : null, student.dni ? `DNI ${formatDni(student.dni)}` : null].filter(Boolean).join(" · ");
+                    const meta = [student.course ? courseLabel(student.course) : null, student.dni ? `DNI ${formatDni(student.dni)}` : null, student.fileNumber ? `Legajo ${student.fileNumber}` : null].filter(Boolean).join(" · ");
                     return (
                         <li key={student.id} className="rounded-2xl border border-line bg-surface p-4">
                             <div className="flex items-start gap-3">
@@ -153,7 +156,7 @@ export function StudentsList({ students, page, limit, total, onEdit, onPage }: S
                                 <StudentStatusBadge status={student.status} />
                             </div>
                             <div className="mt-3 flex flex-wrap gap-2">
-                                <Link href={`/alumnos/${student.id}`} className={`${CARD_BUTTON} border-blue bg-blue text-white hover:bg-blue/90`}>{SEE_PROFILE_LABEL}</Link>
+                                <Link href={`/alumnos/${student.id}`} className={`${CARD_BUTTON} border-blue bg-blue text-on-color hover:bg-blue/90`}>{SEE_PROFILE_LABEL}</Link>
                                 {call ? (
                                     <a href={call} className={CARD_BUTTON}>{CALL_GUARDIAN_LABEL}</a>
                                 ) : (

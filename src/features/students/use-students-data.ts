@@ -2,6 +2,7 @@
 
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
+import { fetchVerifiedBlob } from "@/lib/verified-download";
 import { json, parsed, useInstitutionId } from "../school/use-school-data";
 import {
     parseStudentActivity,
@@ -79,13 +80,15 @@ export function useDeleteStudent() {
     });
 }
 
-// GET /students/:id/report → { url } firmada del PDF del informe
+// GET /students/:id/report → { url } firmada del CSV del informe. El archivo se
+// descarga y se verifica acá (QA-M7-05): si Storage responde 404 la mutación falla
+// y no se abre nada.
 export function useStudentReport() {
     return useMutation({
         mutationFn: async (id: string) => {
             const data = await apiFetch<unknown>(studentReportPath(id));
             const url = (data as { url?: unknown } | null)?.url;
-            return parsed(typeof url === "string" && url ? url : null);
+            return fetchVerifiedBlob(parsed(typeof url === "string" && url ? url : null));
         },
     });
 }

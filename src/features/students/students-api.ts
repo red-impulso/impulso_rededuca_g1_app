@@ -17,10 +17,19 @@ export const STUDENTS_PATH = "/students";
 export const STUDENTS_PAGE_SIZE = 25;
 const SORT_PARAM = { "last-asc": "lastName", "last-desc": "-lastName", course: "course", enrollment: "enrollmentDate" } as const;
 
+// Un DNI escrito con puntos o espacios ("62.000.001") se manda solo con dígitos:
+// Back cambia los puntos por espacios y así no coincidiría con el DNI guardado.
+// Nombres y legajos con letras quedan como están.
+export function normalizeSearchTerm(q: string): string {
+    const term = q.trim();
+    return /^[\d.\s-]+$/.test(term) && /\d/.test(term) ? term.replace(/\D/g, "") : term;
+}
+
 // GET /students. Filtros: courseId, q, status, shift, schoolYear y sort (la división sale del curso).
 export function studentsListPath(filters: StudentFilters): string {
     const params = new URLSearchParams();
-    if (filters.q.trim()) params.set("q", filters.q.trim());
+    const q = normalizeSearchTerm(filters.q);
+    if (q) params.set("q", q);
     if (filters.courseId) params.set("courseId", filters.courseId);
     if (filters.status) params.set("status", filters.status);
     if (filters.shift) params.set("shift", filters.shift);

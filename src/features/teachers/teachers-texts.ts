@@ -62,6 +62,7 @@ export const STATUS_CHANGED_TEXT = "Estado actualizado";
 export const EXPORT_ERROR_TEXT = "No pudimos exportar los docentes.";
 export const IMPORT_ERROR_TEXT = "No pudimos importar el archivo.";
 export const IMPORT_HELP_TEXT = "Archivo CSV con columnas: legajo, nombre, apellido, email, teléfono, revista. Se valida antes de guardar.";
+export const LOCKED_FIELD_HELP = "No se puede cambiar al editar.";
 export const NEW_TEACHER_HELP_TEXT = "El docente recibe un correo para entrar a RedEduca con su cuenta.";
 export const TEACHER_FIELD_LABELS = {
     fullName: "Nombre y apellido",
@@ -100,6 +101,7 @@ export function removeTeacherTitle(teacher: string, subject: string, course: str
     return `¿Quitar a ${teacher} de ${subject} en ${course}?`;
 }
 export const AVAILABILITY_LABELS = { available: "Disponible", conflict: "Conflicto de horario", "over-limit": "Supera el límite", unavailable: "No disponible" } as const;
+export const INACTIVE_REASON_TEXT = "Docente inactivo: no se le pueden asignar materias.";
 export const LICENSE_WARNING_TEXT = "Está de licencia. Podés asignarlo, pero te recomendamos un suplente.";
 export const ROW_STATUS = { assigned: "Asignada", unassigned: "Sin docente", changed: "Cambio sin guardar" } as const;
 export const CHOOSE_OTHER_LABEL = "Elegir otro docente";

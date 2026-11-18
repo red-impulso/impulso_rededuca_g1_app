@@ -1,6 +1,6 @@
 import { EMPTY_VALUE } from "../school/school-texts";
 import { RELATIONSHIP_LABELS, ROLE_LABELS } from "./guardians-texts";
-import type { GuardianGroups, GuardianLink } from "./types";
+import type { GuardianCandidate, GuardianGroups, GuardianLink } from "./types";
 
 export function isActiveLink(link: GuardianLink): boolean {
     return link.status !== "inactive";
@@ -47,4 +47,11 @@ export function formatPhone(phone: string | null): string {
     if (!phone) return EMPTY_VALUE;
     const digits = phone.replace(/\D/g, "");
     return digits.length === 10 ? `${digits.slice(0, 3)} ${digits.slice(3, 6)}-${digits.slice(6)}` : phone;
+}
+
+// Los tutores con vínculo activo no se ofrecen al vincular uno existente (Back respondería 409, QA-M9-05).
+// Un vínculo inactivo sí se puede volver a activar.
+export function availableCandidates(candidates: GuardianCandidate[], links: GuardianLink[]): GuardianCandidate[] {
+    const linked = new Set(links.filter(isActiveLink).map((link) => link.guardianMembershipId));
+    return candidates.filter((candidate) => !linked.has(candidate.membershipId));
 }

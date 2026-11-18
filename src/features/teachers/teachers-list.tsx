@@ -99,7 +99,7 @@ export function TeachersList({ teachers, selected, onToggle, onToggleAll, onEdit
                         </div>
                         <div className="mt-3"><LoadMeter hours={teacher.weeklyHours} max={teacher.maxWeeklyHours} /></div>
                         <div className="mt-3 flex flex-wrap gap-2">
-                            <Link href={`/docentes/${teacher.id}`} className="inline-flex min-h-11 flex-1 items-center justify-center rounded-[10px] bg-blue px-3 text-sm font-semibold text-white">Ver ficha</Link>
+                            <Link href={`/docentes/${teacher.id}`} className="inline-flex min-h-11 flex-1 items-center justify-center rounded-[10px] bg-blue px-3 text-sm font-semibold text-on-color">Ver ficha</Link>
                             <button type="button" onClick={() => onEdit(teacher)} className="inline-flex min-h-11 flex-1 items-center justify-center rounded-[10px] border border-line px-3 text-sm font-semibold text-ink">Editar</button>
                             <Link href={assignHref(teacher)} className="inline-flex min-h-11 flex-1 items-center justify-center rounded-[10px] border border-line px-3 text-sm font-semibold text-ink">{ASSIGN_SUBJECTS_LABEL}</Link>
                         </div>
